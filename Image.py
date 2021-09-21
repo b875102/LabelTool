@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QPixmap, QPainter, QPen
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
 import copy
 from Label import Label
 
@@ -32,8 +32,16 @@ class Image(QtCore.QObject):
         self.labels = []
         self.ScaleImage()
 
+        #add label
         self.drawing = False
-        self.lastPoint = QtCore.QPoint()
+        self.lastPoint = None #QtCore.QPoint()
+        
+        #modify label
+        self.moving = False
+        self.selectedLabel = None
+        self.selectedIndex = -1
+        self.pivotPoint = None
+        self.movingBasePoint = None
         
     def __del__(self):
         pass
@@ -44,7 +52,7 @@ class Image(QtCore.QObject):
 
 
     def eventFilter(self, source, event):
-        #print('MouseTracker: eventFilter_{0}'.format(event.type()))
+        print('MouseTracker: eventFilter_{0}'.format(event.type()))
         if source is self.widget:
             if event.type() == QtCore.QEvent.MouseMove:
                 self._mouseMoveEvent.emit(self.cursorPosition(event.pos()))
@@ -53,6 +61,8 @@ class Image(QtCore.QObject):
                 self.mousePressEvent(event)
             elif event.type() == QtCore.QEvent.MouseButtonRelease:
                 self.mouseReleaseEvent(event)
+            elif event.type() == QtCore.QEvent.KeyPress:
+                self.keyPressEvent(event)
             elif event.type() == QtCore.QEvent.Paint:
                 self.paintEvent(event)
                 
@@ -69,35 +79,130 @@ class Image(QtCore.QObject):
     def mousePressEvent(self, event):
         #print('mousePressEvent')
         if event.button() == Qt.LeftButton:
-            self.drawing = True
-            self.lastPoint = self.cursorPosition(event.pos())
+            
+            currentPosition = self.cursorPosition(event.pos())
             #self.lastPoint = event.pos()# + QPoint(-9, -9)
+            
+            idx = -1
+            self.selectedLabel = None
+            for label in self.labels:
+                idx += 1
+                if label.selected:
+                    self.selectedLabel = label
+                    self.selectedIndex = idx
+                    self.pivotPoint = self.selectedLabel.pivotPoint
+                    
+                    if not self.pivotPoint:
+                        self.movingBasePoint = currentPosition
+                    break
+            
+            if self.selectedLabel:
+                #print('press moving')
+                self.moving = True
+            else:
+                #print('press drawing')
+                self.drawing = True
+                self.lastPoint = currentPosition
+                
 
     def mouseMoveEvent(self, event):
         #print('mouseMoveEvent')
-        if event.buttons() and Qt.LeftButton and self.drawing:
-            if self.lastPoint:
-                currentPosition = self.cursorPosition(event.pos())
-                #currentPosition = event.pos()# + QPoint(-9, -9)
-                tmpLabels = copy.deepcopy(self.labels)
-                tmpLabels.append(Label(self.lastPoint, currentPosition))
-                self.drawLine(tmpLabels)
+        #print('drawing: ', self.drawing, ', moving: ', self.moving)
+        
+        currentPosition = self.cursorPosition(event.pos())
+        #currentPosition = event.pos()# + QPoint(-9, -9)
+                    
+        if event.buttons() and Qt.LeftButton:
+            if self.drawing:
+                if self.lastPoint:
+                    #print('mouse move drawing')
+                    tmpLabels = copy.deepcopy(self.labels)
+                    tmpLabels.append(Label(self.lastPoint, currentPosition))
+                    self.drawLine(tmpLabels)
+            elif self.moving:
+                if self.selectedLabel:
+                    #print('mouse move moving')
+                    tmpLabels = copy.deepcopy(self.labels)
+                    tmpLabels.pop(self.selectedIndex)
+                    
+                    label = None
+                    if self.pivotPoint:
+                        label = Label(self.pivotPoint, currentPosition)
+                        label.selectedEndpoint = currentPosition
+                    elif self.movingBasePoint:
+                        shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
+                        p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
+                        p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
+                        label = Label(p1, p2)
+                        
+                    if label:
+                        label.selected = True
+                        tmpLabels.append(label)
+                    self.drawLine(tmpLabels)
         else:
+            #print('just mouse move')
             for label in self.labels:
-                label.isSelected(event.pos())
+                #label.isSelected(event.pos())
+                if label.isSelected(currentPosition):
+                    break
+                
             self.drawLine(self.labels)
 
     def mouseReleaseEvent(self, event):
         #print('mouseReleaseEvent')
         if event.button() == Qt.LeftButton:
+            
             currentPosition = self.cursorPosition(event.pos())
             #currentPosition = event.pos()# + QPoint(-9, -9)
-            if Label.isDifferent(self.lastPoint, currentPosition):
-                self.labels.append(Label(self.lastPoint, currentPosition))
-                self.drawLine(self.labels)
-                self.drawing = False
-                self._labelChangedEvent.emit(self.labels)
-
+                
+            if self.drawing:
+                #print('release drawing')
+                if Label.isDifferent(self.lastPoint, currentPosition):
+                    self.labels.append(Label(self.lastPoint, currentPosition))
+            elif self.moving:
+                #print('release moving')
+                self.labels.pop(self.selectedIndex)
+                
+                label = None
+                if self.pivotPoint:
+                    label = Label(self.pivotPoint, currentPosition)
+                elif self.movingBasePoint:
+                    shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
+                    p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
+                    p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
+                    label = Label(p1, p2)
+                    
+                if label:
+                    self.labels.append(label)
+                    
+            self.drawLine(self.labels)
+            self._labelChangedEvent.emit(self.labels)
+                
+                
+                
+        self.drawing = False
+        self.lastPoint = None
+        
+        self.moving = False
+        self.selectedLabel = None
+        self.selectedIndex = -1
+        self.pivotPoint = None
+        self.movingBasePoint = None
+        
+        return 
+    
+    def keyPressEvent(self, event):
+        #print('keyPressEvent ', event.key())
+        
+        idx = -1
+        for label in self.labels:
+            idx += 1
+            if label.selected:
+                self.labels.pop(idx)
+            
+        self.drawLine(self.labels)
+        self._labelChangedEvent.emit(self.labels)
+        
     #implement
     '''
     def SetImage(self, imagePath, labels):
@@ -139,21 +244,34 @@ class Image(QtCore.QObject):
         self.cloneImage = self.scaledPixmap.copy()
         painter = QPainter(self.cloneImage)
         
-        redPen = QPen(Qt.red, 3, Qt.SolidLine)
-        greenPen = QPen(Qt.green, 3, Qt.SolidLine)
+        redPen = QPen(Qt.red, 2, Qt.SolidLine)
+        greenPen = QPen(Qt.green, 2, Qt.SolidLine)
+        
+        redBrush = QBrush(Qt.red, Qt.SolidPattern)
+        greenBrush = QBrush(Qt.green, Qt.SolidPattern)
         
         
         for label in labels:
+
+            
+            if label.selected:
+                painter.setPen(redPen)
+                painter.setBrush(redBrush)
+            else:
+                painter.setPen(greenPen)
+                painter.setBrush(greenBrush)                
+
+            painter.drawPath(label.getPainterPath(self.scalingRatio))
+            
+            '''
             lastPos, currentPos = label.shape.p1, label.shape.p2
             p1 = lastPos * self.scalingRatio
             p2 = currentPos * self.scalingRatio
             
-            if label.selected:
-                painter.setPen(greenPen)
-            else:
-                painter.setPen(redPen)
-                
             painter.drawLine(p1, p2)
+            painter.drawEllipse(p1, 3, 3)
+            painter.drawEllipse(p2, 3, 3)
+            '''
             
             #print('drawLine', lastPos, currentPos)
             

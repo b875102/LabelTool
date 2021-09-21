@@ -72,7 +72,11 @@ class LabelTool(QtWidgets.QMainWindow):
         #print('resizeEvent')
         self.SetSilder()    
     '''
-    
+    def keyPressEvent(self, event):
+        #print('mainform keyPressEvent ', event.key())
+        if self.image:
+            self.image.keyPressEvent(event)
+        
     def GetTitle(self, prefix = ''):
         appname = 'LabelTool {0}'
         return appname.format(prefix)

@@ -9,8 +9,6 @@ class LineType(Enum):
     
 class Line(Shape):
     
-    _Tolerance = 4
-    
     def __init__(self, p1, p2):
         super().__init__(p1, p2)
         
@@ -19,6 +17,7 @@ class Line(Shape):
 
     def isSelected(self, pos):
         result = False
+        
         if self.lineType == LineType.Slash:
             if super().isSelected(pos):
                 a = self.ab[0, 0]
@@ -30,6 +29,7 @@ class Line(Shape):
         elif self.lineType == LineType.Vertical:
             if self.inRange(self.p1.y(), self.p2.y(), pos.y()):
                 result = (abs(pos.x() - self.p1.x()) < self._Tolerance)
+
         return result
     
     def getLineType(self, p1, p2):
