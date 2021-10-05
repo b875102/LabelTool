@@ -86,6 +86,12 @@ class FileHelper(QFileDialog):
     def C2Int(self, c):
         return int(float(c))
     
+    def GetFile(self, parent, caption):
+        #selectedPath = QFileDialog.getExistingDirectory(parent, caption, self.lastDir)
+        #selectedPath = QFileDialog.getOpenFileName(parent, caption, self.lastDir, self._DEFAULT_FILE_TYPE);
+        selectedPath = QFileDialog.getOpenFileName(parent, caption, self.lastDir)
+        return selectedPath[0]
+        
 if __name__ == "__main__":
     
     from PyQt5 import QtCore

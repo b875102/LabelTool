@@ -13,15 +13,16 @@ class Image(QtCore.QObject):
     _mouseMoveEvent = QtCore.pyqtSignal(QtCore.QPoint)
     _labelChangedEvent = QtCore.pyqtSignal(list)
 
-    def __init__(self, widget, imagePath):
+    def __init__(self, widget, imagePath, enableLabel = False):
         super().__init__(widget)
         
         #print('Image__init__')
         
         self._widget = widget
 
-        self.widget.setMouseTracking(True)
-        self.widget.installEventFilter(self)
+        if enableLabel:
+            self.widget.setMouseTracking(True)
+            self.widget.installEventFilter(self)
         
         self.imagePath = imagePath
         self.pixmap = QPixmap(self.imagePath)
@@ -52,7 +53,7 @@ class Image(QtCore.QObject):
 
 
     def eventFilter(self, source, event):
-        print('MouseTracker: eventFilter_{0}'.format(event.type()))
+        #print('MouseTracker: eventFilter_{0}'.format(event.type()))
         if source is self.widget:
             if event.type() == QtCore.QEvent.MouseMove:
                 self._mouseMoveEvent.emit(self.cursorPosition(event.pos()))
