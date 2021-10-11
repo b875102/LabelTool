@@ -107,7 +107,6 @@ class IntersectionConfiguration():
         
         roadInfo = self.getRoadInfo()
         roadInfo.showInTree(root)
-
         
 if __name__ == "__main__":
     
