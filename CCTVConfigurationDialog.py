@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 import copy
 
+from CCTVConfiguration import CCTVConfiguration
 from CCTVConfiguration import Header as CCTVHeader
 from CCTVConfiguration import RoadInfo as CCTVRoadInfo
 from CCTVConfiguration import VirtualGate as CCTVVirtualGate
@@ -31,7 +32,7 @@ class CCTVConfigurationDialog(QtWidgets.QDialog):
         self.btnDeletePoint.clicked.connect(self.__DeletePoint)
         
         self.tblRoad.itemChanged.connect(self.__tblRoad_ItemChanged)
-        self.tblRoad.currentItemChanged.connect(self.__tblRoad_CurrentItemChanged)
+        #self.tblRoad.currentItemChanged.connect(self.__tblRoad_CurrentItemChanged)
         self.tblRoad.itemSelectionChanged.connect(self.__tblRoad_ItemSelectionChanged)
         
         self.btnAddRoad.clicked.connect(self.__AddRoad)
@@ -76,8 +77,13 @@ class CCTVConfigurationDialog(QtWidgets.QDialog):
         
     def __tblLane_ItemChanged(self, item):
         #self.tblLane.sortItems(0, QtCore.Qt.AscendingOrder)
-        self.__tblItemChanged(self.tblLane, item)        
-    
+        self.__tblItemChanged(self.tblLane, item)
+        
+        '''
+        if self.keepRoadIdxOfLanes > -1:
+            self.__RefreshLanes(self.keepRoadIdxOfLanes)
+        '''
+        
     def __tblItemChanged(self, tbl, item):
         '''  
         row = item.row()
@@ -88,18 +94,21 @@ class CCTVConfigurationDialog(QtWidgets.QDialog):
         tbl.resizeRowsToContents()
         tbl.resizeColumnsToContents()
     
+    '''
     def __tblRoad_CurrentItemChanged(self, current, previous):
         self.__tblCurrentItemChanged(self.tblRoad, current, previous)
         
     def __tblCurrentItemChanged(self, tbl, current, previous):
         #print('tblCurrentItemChanged')
         pass
-        
+    '''
+    
     def __tblRoad_ItemSelectionChanged(self):
         
+
         if self.keepRoadIdxOfLanes > -1:
             self.__RefreshLanes(self.keepRoadIdxOfLanes)
-            
+
         self.tblLane.setRowCount(0)
         
         currentRow = self.tblRoad.currentRow()
@@ -335,14 +344,20 @@ class CCTVConfigurationDialog(QtWidgets.QDialog):
         cctvConfig.virtualGate = cctvVirtualGate
         self.LoadCCTVConfig(cctvConfig)
 
-    def GetResult(self):
+    def GetResult(self, execResult):
         
-        self.__RefreshHeader()
-        self.__RefreshReferencePoints()
-        self.__RefreshRoads()
-        
-        return self.tempConfig
-        
+        if execResult == QtWidgets.QDialog.Accepted:
+            
+            if self.keepRoadIdxOfLanes > -1:
+                self.__RefreshLanes(self.keepRoadIdxOfLanes)
+            
+            self.__RefreshHeader()
+            self.__RefreshReferencePoints()
+            self.__RefreshRoads()
+            
+            return self.tempConfig
+        else:
+            return self.config
         
 if __name__ == "__main__":
     
@@ -367,7 +382,7 @@ if __name__ == "__main__":
         print('Rejected')
     
     ''' '''
-    config = dialog.GetResult()
+    config = dialog.GetResult(dialog.exec())
     print(config.header.toXmlString())
     print(config.roadInfo.toXmlString())
     print(config.virtualGate.toXmlString())

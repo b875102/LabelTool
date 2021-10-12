@@ -65,9 +65,9 @@ class Header():
 
         QTreeWidgetItem(root, ['cctv', self.cctv])
         QTreeWidgetItem(root, ['version', self.version])
-        QTreeWidgetItem(root, ['date', self.version])
-        QTreeWidgetItem(root, ['intersection_id', self.version])
-        QTreeWidgetItem(root, ['device_ip', self.version])
+        QTreeWidgetItem(root, ['date', self.date])
+        QTreeWidgetItem(root, ['intersection_id', self.intersection_id])
+        QTreeWidgetItem(root, ['device_ip', self.device_ip])
         
         pos = QTreeWidgetItem(root, ['camera_position'])
         QTreeWidgetItem(pos, ['lat', self.camera_position.latitude])

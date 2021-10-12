@@ -6,6 +6,7 @@ from FileHelper import FileHelper
 from OpenFileDialog import OpenFileDialog
 from CCTVConfiguration import CCTVConfiguration
 from IntersectionConfiguration import IntersectionConfiguration
+from CCTVConfigurationDialog import CCTVConfigurationDialog
 
 class LabelTool(QtWidgets.QMainWindow):
     
@@ -24,6 +25,7 @@ class LabelTool(QtWidgets.QMainWindow):
         self.lblCoordinate = QtWidgets.QLabel('')
         self.statusBar().addPermanentWidget(self.lblCoordinate)
         self.openFileDialog = OpenFileDialog(self)
+        self.cctvConfigurationDialog = CCTVConfigurationDialog(self)
         
         self.image = None
         self.illustrationImage = None
@@ -122,9 +124,19 @@ class LabelTool(QtWidgets.QMainWindow):
                 
                 self.OpenImage(dialogResult['CCTVImage'])
                 self.OpenIllustrationImage(dialogResult['Illustration'])
+                
                 self.intersectionConfig.loadXml(dialogResult['IntersectionConfiguration'])
-                self.intersectionConfig.showInTree(self.treeIntersectionConfig)                
-                self.cctvConfig.loadXml(dialogResult['CCTVConfiguration'])
+                self.intersectionConfig.showInTree(self.treeIntersectionConfig)
+                
+                if dialogResult['CCTVConfiguration'] != '':
+                    self.cctvConfig.loadXmlFile(dialogResult['CCTVConfiguration'])
+                    self.cctvConfigurationDialog.LoadCCTVConfig(self.cctvConfig)
+                else:
+                    self.cctvConfigurationDialog.LoadIntersectionConfig(self.intersectionConfig)
+                    
+                execResult = self.cctvConfigurationDialog.exec()
+                
+                self.cctvConfig = self.cctvConfigurationDialog.GetResult(execResult)
                 self.cctvConfig.showInTree(self.treeCCTVConfig)
                 
             else:
