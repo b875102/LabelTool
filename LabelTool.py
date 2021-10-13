@@ -116,13 +116,13 @@ class LabelTool(QtWidgets.QMainWindow):
         
         self.cctvConfig.loadXml('D:/_Course/Project/LabelTool/data/cctv_configuration.xml')
         self.cctvConfig.showInTree(self.treeCCTVConfig)
-        '''
+        
         
         self.openFileDialog.txtIllustration.setText('D:/_Course/Project/LabelTool/data/illustration.png')
         self.openFileDialog.txtCCTVImage.setText('D:/_Course/Project/LabelTool/data/192.168.111.26_園區二路與研發二路球機(12)_道路淨空.png')
         self.openFileDialog.txtIntersectionConfiguration.setText('D:/_Course/Project/LabelTool/data/Intersection_configuration.xml')
         self.openFileDialog.txtCCTVConfiguration.setText('D:/_Course/Project/LabelTool/data/cctv_configuration.xml')
-        
+        '''
         
         if self.openFileDialog.exec() == QtWidgets.QDialog.Accepted:
             if self.openFileDialog.checkResult():
