@@ -1,24 +1,24 @@
 from collections import UserList
-from Label import Label
-
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QPainterPath
+#from Label import Label
+#from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QPainterPath
 
 class LabelList(UserList):
     def __init__(self, initlist = None):
         super(LabelList, self).__init__(initlist)
         
-    def add(self, p1, p2):
-        if Label.isDifferent(p1, p2):
-            label = Label(p1, p2)
-            self.append(label)
+    def add(self, label):
+        self.append(label)
         
     def size(self):
         return len(self.data)
 
     def scoop(self, pos):
+        scoopLabel = None
         for label in self.data:
-            label.isSelected(pos)
-        return
+            if label.isSelected(pos):
+                scoopLabel = label
+                break
+        return scoopLabel
 
     def toString(self):
         lst = []
@@ -26,13 +26,17 @@ class LabelList(UserList):
             lst.append(label.toString())
         return lst
         
-    def getPainterPath(self):
-        pass
+    def getPainterPathList(self, scalingRatio):
+        painterPathList = []
+        for label in self.data:
+            painterPathList.append(label.getPainterPath(scalingRatio))
+        return painterPathList
         
 if __name__ == "__main__":
     
     from PyQt5.QtCore import QPoint
     import numpy as np
+    from Label import Label
     
     ll = LabelList()
     
@@ -47,13 +51,13 @@ if __name__ == "__main__":
         p1 = QPoint(n1, n2)
         p2 = QPoint(n3, n4)
   
-        ll.add(p1, p2)
+        ll.add(Label(p1, p2))
     
     print(ll.size())
     #print(ll.data)
     
     ll2 = ll.copy()
-    ll.Add(QPoint(34, 5), QPoint(38, 5))
+    ll.add(Label(QPoint(34, 5), QPoint(38, 5)))
 
     
     print(ll.toString())

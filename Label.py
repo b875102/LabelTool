@@ -9,9 +9,12 @@ class LabelType(Enum):
 
 class Label():
 
-    def __init__(self, p1, p2, labelType = LabelType.Line):
+    def __init__(self, p1, p2, roadIdx = None, laneIdx = None, labelType = LabelType.Line):
         
         self.labelType = labelType
+        self.roadIdx = roadIdx
+        self.laneIdx = laneIdx
+        
         self.shape = Line(p1, p2)
         
         self.selected = False

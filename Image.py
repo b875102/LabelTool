@@ -1,8 +1,9 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget
+#from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
 import copy
+#from LabelList import LabelList
 from Label import Label
 
 class Image(QtCore.QObject):
@@ -12,6 +13,7 @@ class Image(QtCore.QObject):
     
     _mouseMoveEvent = QtCore.pyqtSignal(QtCore.QPoint)
     _labelChangedEvent = QtCore.pyqtSignal(list)
+    _labelSelectedEvent = QtCore.pyqtSignal(Label)
 
     def __init__(self, widget, imagePath, enableLabel = False):
         super().__init__(widget)
@@ -31,6 +33,9 @@ class Image(QtCore.QObject):
         
         self.scalingRatio = 1
         self.labels = []
+        #self.labelList = LabelList()
+        
+        self.cctvConfig = None
         self.ScaleImage()
 
         #add label
@@ -145,6 +150,7 @@ class Image(QtCore.QObject):
             for label in self.labels:
                 #label.isSelected(event.pos())
                 if label.isSelected(currentPosition):
+                    self._labelSelectedEvent.emit(label)
                     break
                 
             self.drawLine(self.labels)
@@ -171,7 +177,7 @@ class Image(QtCore.QObject):
                     shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
                     p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
                     p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
-                    label = Label(p1, p2)
+                    label = Label(p1, p2, self.selectedLabel.roadIdx, self.selectedLabel.laneIdx)
                     
                 if label:
                     self.labels.append(label)

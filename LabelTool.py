@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+from Label import Label
 from Image import Image
 from FileHelper import FileHelper
 from OpenFileDialog import OpenFileDialog
@@ -34,16 +35,19 @@ class LabelTool(QtWidgets.QMainWindow):
         #Tool Bar
         self.actionOpen_Video.triggered.connect(self.OpenVideo_Click)
         self.actionOpen_Images.triggered.connect(self.OpenImages_Click)
-        self.actionOpen_Images_Patty_Label.triggered.connect(self.OpenImages_Patty_Label_Click)
+        #self.actionOpen_Images_Patty_Label.triggered.connect(self.OpenImages_Patty_Label_Click)
         
         #Widget
         self.hsldScaling.valueChanged.connect(self.SetSilder)
         self.btnDock.clicked.connect(self.DockImage)
         self.lstFile.itemClicked.connect(self.FileList_Clicked)
+        self.treeCCTVConfig.itemClicked.connect(self.TreeCCTVConfig_ItemClicked)
         self.treeIntersectionConfig.itemClicked.connect(self.TreeIntersectionConfig_ItemClicked)
         
 
         #set attribute
+        self.actionOpen_Video.setVisible(False)
+        self.actionOpen_Images_Patty_Label.setVisible(False)
         self.spbScaling.setSuffix('%')
         self.hsldScaling.setValue(100)
         self.dwgFileList.close()
@@ -114,6 +118,12 @@ class LabelTool(QtWidgets.QMainWindow):
         self.cctvConfig.showInTree(self.treeCCTVConfig)
         '''
         
+        self.openFileDialog.txtIllustration.setText('D:/_Course/Project/LabelTool/data/illustration.png')
+        self.openFileDialog.txtCCTVImage.setText('D:/_Course/Project/LabelTool/data/192.168.111.26_園區二路與研發二路球機(12)_道路淨空.png')
+        self.openFileDialog.txtIntersectionConfiguration.setText('D:/_Course/Project/LabelTool/data/Intersection_configuration.xml')
+        self.openFileDialog.txtCCTVConfiguration.setText('D:/_Course/Project/LabelTool/data/cctv_configuration.xml')
+        
+        
         if self.openFileDialog.exec() == QtWidgets.QDialog.Accepted:
             if self.openFileDialog.checkResult():
                 
@@ -139,6 +149,23 @@ class LabelTool(QtWidgets.QMainWindow):
                 self.cctvConfig = self.cctvConfigurationDialog.GetResult(execResult)
                 self.cctvConfig.showInTree(self.treeCCTVConfig)
                 
+                labels = []
+                for roadIdx, road in enumerate(self.cctvConfig.virtualGate.roads):
+                    p1, p2 = road.position1, road.position2
+                    
+                    if p1.hasValue() and p2.hasValue:
+                        labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx))
+                        
+                    for laneIdx, lane in enumerate(road.lanes):
+                        p1, p2 = lane.position1, lane.position2
+                        
+                        if p1.hasValue() and p2.hasValue:
+                            labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx, laneIdx))
+                    
+                self.image.labels = labels
+                self.Label_Changed(self.image.labels)
+                self.SetSilder()                    
+                
             else:
                 print('QDialog.Invalid')
         else:
@@ -161,9 +188,12 @@ class LabelTool(QtWidgets.QMainWindow):
                     self.image.labels = labels
                     self.Label_Changed(self.image.labels)
                     self.SetSilder()
+    
+    def TreeCCTVConfig_ItemClicked(self, item, column):
+        print('TreeCCTVConfig', column, item.text(column))
         
-    def TreeIntersectionConfig_ItemClicked(self):
-        print('TreeIntersectionConfig_ItemClicked')
+    def TreeIntersectionConfig_ItemClicked(self, item, column):
+        print('TreeIntersectionConfig', column, item.text(column))
     
     def LoadImages(self, pngfiles):
         self.lstLabel.clear()
@@ -183,13 +213,15 @@ class LabelTool(QtWidgets.QMainWindow):
         if self.image:
             self.image._widget = None
             self.image._mouseMoveEvent.disconnect(self.Image_MouseMove)
-            self.image._labelChangedEvent.disconnect(self.Label_Changed)            
+            self.image._labelChangedEvent.disconnect(self.Label_Changed)
+            self.image._labelSelectedEvent.disconnect(self.Label_Selected)   
             del self.image
 
         self.imagePath = imagePath
         self.image = Image(self.lblImage, imagePath, True)
         self.image._mouseMoveEvent.connect(self.Image_MouseMove)
         self.image._labelChangedEvent.connect(self.Label_Changed)
+        self.image._labelSelectedEvent.connect(self.Label_Selected) 
         self.SetSilder()
     
     def OpenIllustrationImage(self, imagePath):
@@ -213,6 +245,34 @@ class LabelTool(QtWidgets.QMainWindow):
             self.lstLabel.addItem(label.toString())
             print(label.toString())
         
+    @QtCore.pyqtSlot(Label)
+    def Label_Selected(self, label):
+        #print('Label_Selected', label.toString())
+        #print('Label_Selected', label.roadIdx, label.laneIdx)
+        
+        roadIdx = label.roadIdx
+        laneIdx = label.laneIdx
+        
+        itemKey = ''
+        try:
+            if roadIdx > -1 and laneIdx > -1:
+                itemKey = 'Road_{0}_itemLanes_lane_{1}_position'.format(roadIdx, laneIdx)
+        except:
+            try:
+                if roadIdx > -1:
+                    itemKey = 'Road_{0}_position'.format(roadIdx)
+            except:
+                pass
+        
+        print('itemKey', roadIdx, laneIdx, itemKey)
+        
+        if itemKey != '':
+            item = self.cctvConfig.virtualGate.treeItems[itemKey]
+            #item.setSelected(True)
+            #self.treeCCTVConfig.itemClicked(item, 0)
+            #self.treeCCTVConfig.scrollToItem(item)
+            self.treeCCTVConfig.setCurrentItem(item, 0)
+
     def DockImage(self):
         #print('DockImage', self.init)
         if self.image:

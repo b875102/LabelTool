@@ -59,14 +59,18 @@ class CCTVConfigurationDialog(QtWidgets.QDialog):
         header = ['img_x', 'img_y', 'lat', 'lng', 'refIdx']
         self.tblReferencePoints.setColumnCount(self._TABLE_COLUMNS_REFERENCE_POINTS)
         self.tblReferencePoints.setHorizontalHeaderLabels(header)
+        self.tblReferencePoints.hideColumn(4)
         
         header = ['road_id', 'link_id', 'name', 'direction', 'section', 'x1', 'y1', 'x2', 'y2', 'roadIdx']
         self.tblRoad.setColumnCount(self._TABLE_COLUMNS_ROAD)
         self.tblRoad.setHorizontalHeaderLabels(header)
+        self.tblRoad.hideColumn(9)
         
         header = ['lane_id', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
         self.tblLane.setColumnCount(self._TABLE_COLUMNS_LANE)
         self.tblLane.setHorizontalHeaderLabels(header)
+        self.tblLane.hideColumn(5)
+        self.tblLane.hideColumn(6)
         
     def __tblReferencePoints_ItemChanged(self, item):
         self.__tblItemChanged(self.tblReferencePoints, item)
@@ -105,27 +109,31 @@ class CCTVConfigurationDialog(QtWidgets.QDialog):
     
     def __tblRoad_ItemSelectionChanged(self):
         
-
-        if self.keepRoadIdxOfLanes > -1:
-            self.__RefreshLanes(self.keepRoadIdxOfLanes)
-
-        self.tblLane.setRowCount(0)
-        
         currentRow = self.tblRoad.currentRow()
-        self.keepRoadIdxOfLanes = int(self.tblRoad.item(currentRow, self._TABLE_COLUMNS_ROAD - 1).text())
         
-        lanes = self.tempConfig.virtualGate.roads[self.keepRoadIdxOfLanes].lanes
-        
-        laneList = []
-        
-        for idx, lane in enumerate(lanes):
-            values = lane.getValues()
-            values.append(str(self.keepRoadIdxOfLanes))
-            values.append(str(idx))
-            laneList.append(values)
+        if currentRow >= 0:
             
-        self.__AddTableRow(self.tblLane, laneList)
+            if self.keepRoadIdxOfLanes > -1:
+                self.__RefreshLanes(self.keepRoadIdxOfLanes)
     
+            self.tblLane.setRowCount(0)
+
+            self.keepRoadIdxOfLanes = int(self.tblRoad.item(currentRow, self._TABLE_COLUMNS_ROAD - 1).text())
+            
+            lanes = self.tempConfig.virtualGate.roads[self.keepRoadIdxOfLanes].lanes
+            
+            laneList = []
+            
+            for idx, lane in enumerate(lanes):
+                values = lane.getValues()
+                values.append(str(self.keepRoadIdxOfLanes))
+                values.append(str(idx))
+                laneList.append(values)
+                
+            self.__AddTableRow(self.tblLane, laneList)
+        else:
+            self.keepRoadIdxOfLanes = -1
+            
     def __AddPoint(self):
         
         rowCount = str(self.tblReferencePoints.rowCount())
@@ -248,20 +256,21 @@ class CCTVConfigurationDialog(QtWidgets.QDialog):
         
     def __RefreshLanes(self, roadIdx):
         
-        self.tempConfig.virtualGate.roads[roadIdx].lanes.clear()
-        
-        rowCount = self.tblLane.rowCount()
-        
-        for idx in range(rowCount):
+        if roadIdx >= 0:
+            self.tempConfig.virtualGate.roads[roadIdx].lanes.clear()
             
-            cctvLane = CCTVLane(None)
-            cctvLane.lane_id = self.tblLane.item(idx, 0).text()
-            cctvLane.position1.x = self.tblLane.item(idx, 1).text()
-            cctvLane.position1.y = self.tblLane.item(idx, 2).text()
-            cctvLane.position2.x = self.tblLane.item(idx, 3).text()
-            cctvLane.position2.y = self.tblLane.item(idx, 4).text()
+            rowCount = self.tblLane.rowCount()
             
-            self.tempConfig.virtualGate.roads[roadIdx].lanes.append(cctvLane)
+            for idx in range(rowCount):
+                
+                cctvLane = CCTVLane(None)
+                cctvLane.lane_id = self.tblLane.item(idx, 0).text()
+                cctvLane.position1.x = self.tblLane.item(idx, 1).text()
+                cctvLane.position1.y = self.tblLane.item(idx, 2).text()
+                cctvLane.position2.x = self.tblLane.item(idx, 3).text()
+                cctvLane.position2.y = self.tblLane.item(idx, 4).text()
+                
+                self.tempConfig.virtualGate.roads[roadIdx].lanes.append(cctvLane)
     
     def __ShowConfig(self, cctvConfig):
         
@@ -376,13 +385,15 @@ if __name__ == "__main__":
     intersectionConfig = IntersectionConfiguration('D:/_Course/Project/LabelTool/data/Intersection_configuration.xml')
     dialog.LoadIntersectionConfig(intersectionConfig)
     '''
-    if dialog.exec() == QtWidgets.QDialog.Accepted:
+    
+    execResult= dialog.exec()
+    if execResult == QtWidgets.QDialog.Accepted:
         print('Accepted')
     else:
         print('Rejected')
     
     ''' '''
-    config = dialog.GetResult(dialog.exec())
+    config = dialog.GetResult(execResult)
     print(config.header.toXmlString())
     print(config.roadInfo.toXmlString())
     print(config.virtualGate.toXmlString())

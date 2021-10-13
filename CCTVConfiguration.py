@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ElementTree
 #from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QTreeWidgetItem
+from PyQt5.QtCore import QPoint
 
 def safeNodeText(node):
     txt = ''
@@ -14,6 +15,12 @@ class PointPosition():
     def __init__(self, x = '', y = ''):
         self.x = x
         self.y = y
+        
+    def hasValue(self):
+        return self.x != '' and self.y != ''
+    
+    def toQPoint(self):
+        return QPoint(int(self.x), int(self.y))
     
 class GeographicCoordinate():
     def __init__(self, latitude = '', longitude = ''):
@@ -48,7 +55,8 @@ class Header():
         self.camera_position = GeographicCoordinate()
         
         self.extract(header)
-
+        self.treeItems = {}
+        
     def extract(self, header):
         
         if header:
@@ -63,15 +71,16 @@ class Header():
             
     def showInTree(self, root):
 
-        QTreeWidgetItem(root, ['cctv', self.cctv])
-        QTreeWidgetItem(root, ['version', self.version])
-        QTreeWidgetItem(root, ['date', self.date])
-        QTreeWidgetItem(root, ['intersection_id', self.intersection_id])
-        QTreeWidgetItem(root, ['device_ip', self.device_ip])
+        self.treeItems['cctv'] = QTreeWidgetItem(root, ['cctv', self.cctv])
+        self.treeItems['version'] = QTreeWidgetItem(root, ['version', self.version])
+        self.treeItems['date'] = QTreeWidgetItem(root, ['date', self.date])
+        self.treeItems['intersection_id'] = QTreeWidgetItem(root, ['intersection_id', self.intersection_id])
+        self.treeItems['device_ip'] = QTreeWidgetItem(root, ['device_ip', self.device_ip])
         
         pos = QTreeWidgetItem(root, ['camera_position'])
-        QTreeWidgetItem(pos, ['lat', self.camera_position.latitude])
-        QTreeWidgetItem(pos, ['lng', self.camera_position.longitude])
+        self.treeItems['camera_position'] = pos
+        self.treeItems['camera_position_lat'] = QTreeWidgetItem(pos, ['lat', self.camera_position.latitude])
+        self.treeItems['camera_position_lng'] = QTreeWidgetItem(pos, ['lng', self.camera_position.longitude])
         
         
         '''
@@ -111,7 +120,8 @@ class RoadInfo():
         
         self.reference_points = []
         self.extract(roadInfo)
-  
+        self.treeItems = {}
+        
     def extract(self, roadInfo):
 
         if roadInfo:
@@ -123,12 +133,18 @@ class RoadInfo():
         road_Info = QTreeWidgetItem(root, ['RoadInformation'])
         ref_point = QTreeWidgetItem(road_Info, ['Reference_points'])
         
-        for reference_point in self.reference_points:
+        self.treeItems['RoadInformation'] = road_Info
+        self.treeItems['Reference_points'] = ref_point
+        
+        for idx, reference_point in enumerate(self.reference_points):
+            
             point = QTreeWidgetItem(ref_point, ['point'])
-            QTreeWidgetItem(point, ['img_x', reference_point.img_position.x])
-            QTreeWidgetItem(point, ['img_y', reference_point.img_position.y])
-            QTreeWidgetItem(point, ['lat', reference_point.geograph_position.latitude])
-            QTreeWidgetItem(point, ['lng', reference_point.geograph_position.longitude])
+            
+            self.treeItems['reference_point_{0}'.format(idx)] = point
+            self.treeItems['reference_point_{0}_img_x'.format(idx)] = QTreeWidgetItem(point, ['img_x', reference_point.img_position.x])
+            self.treeItems['reference_point_{0}_img_y'.format(idx)] = QTreeWidgetItem(point, ['img_y', reference_point.img_position.y])
+            self.treeItems['reference_point_{0}_lat'.format(idx)] = QTreeWidgetItem(point, ['lat', reference_point.geograph_position.latitude])
+            self.treeItems['reference_point_{0}_lng'.format(idx)] = QTreeWidgetItem(point, ['lng', reference_point.geograph_position.longitude])
             
     def toXmlString(self):
         
@@ -158,7 +174,8 @@ class VirtualGate():
     def __init__(self, virtualGate):
         self.roads = []
         self.extract(virtualGate)
-  
+        self.treeItems = {}
+        
     def extract(self, virtualGate):
 
         if virtualGate:
@@ -169,32 +186,40 @@ class VirtualGate():
         
         virtual_gate = QTreeWidgetItem(root, ['Virtual_gate'])
         
-        for road in self.roads:
+        for roadIdx, road in enumerate(self.roads):
             itemRoad = QTreeWidgetItem(virtual_gate, ['Road'])
             
-            QTreeWidgetItem(itemRoad, ['road_id', road.road_id])
-            QTreeWidgetItem(itemRoad, ['link_id', road.link_id])
-            QTreeWidgetItem(itemRoad, ['name', road.name])
-            QTreeWidgetItem(itemRoad, ['direction', road.direction])
-            QTreeWidgetItem(itemRoad, ['section', road.section])
+            self.treeItems['Road_{0}'.format(roadIdx)] = itemRoad
+            self.treeItems['Road_{0}_road_id'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['road_id', road.road_id])
+            self.treeItems['Road_{0}_link_id'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['link_id', road.link_id])
+            self.treeItems['Road_{0}_name'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['name', road.name])
+            self.treeItems['Road_{0}_direction'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['direction', road.direction])
+            self.treeItems['Road_{0}_section'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['section', road.section])
             
             itemPosition = QTreeWidgetItem(itemRoad, ['position'])
-            QTreeWidgetItem(itemPosition, ['x1', road.position1.x])
-            QTreeWidgetItem(itemPosition, ['y1', road.position1.y])
-            QTreeWidgetItem(itemPosition, ['x2', road.position2.x])
-            QTreeWidgetItem(itemPosition, ['y2', road.position2.y])
+            
+            self.treeItems['Road_{0}_position'.format(roadIdx)] = itemPosition
+            self.treeItems['Road_{0}_position_x1'.format(roadIdx)] = QTreeWidgetItem(itemPosition, ['x1', road.position1.x])
+            self.treeItems['Road_{0}_position_y1'.format(roadIdx)] = QTreeWidgetItem(itemPosition, ['y1', road.position1.y])
+            self.treeItems['Road_{0}_position_x2'.format(roadIdx)] = QTreeWidgetItem(itemPosition, ['x2', road.position2.x])
+            self.treeItems['Road_{0}_position_y2'.format(roadIdx)] = QTreeWidgetItem(itemPosition, ['y2', road.position2.y])
             
             itemLanes = QTreeWidgetItem(itemRoad, ['lanes'])
+            self.treeItems['Road_{0}_itemLanes'.format(roadIdx)] = itemLanes
             
-            for lane in road.lanes:
+            for laneIdx, lane in enumerate(road.lanes):
                 itemLane = QTreeWidgetItem(itemLanes, ['lane'])
-                QTreeWidgetItem(itemLane, ['lane_id', lane.lane_id])
+                
+                self.treeItems['Road_{0}_itemLanes_lane_{1}'.format(roadIdx, laneIdx)] = itemLane
+                self.treeItems['Road_{0}_itemLanes_lane_{1}_lane_id'.format(roadIdx, laneIdx)] = QTreeWidgetItem(itemLane, ['lane_id', lane.lane_id])
                 
                 itemPosition = QTreeWidgetItem(itemLane, ['position'])
-                QTreeWidgetItem(itemPosition, ['x1', lane.position1.x])
-                QTreeWidgetItem(itemPosition, ['y1', lane.position1.y])
-                QTreeWidgetItem(itemPosition, ['x2', lane.position2.x])
-                QTreeWidgetItem(itemPosition, ['y2', lane.position2.y])
+                
+                self.treeItems['Road_{0}_itemLanes_lane_{1}_position'.format(roadIdx, laneIdx)] = itemPosition
+                self.treeItems['Road_{0}_itemLanes_lane_{1}_position_x1'.format(roadIdx, laneIdx)] = QTreeWidgetItem(itemPosition, ['x1', lane.position1.x])
+                self.treeItems['Road_{0}_itemLanes_lane_{1}_position_y1'.format(roadIdx, laneIdx)] = QTreeWidgetItem(itemPosition, ['y1', lane.position1.y])
+                self.treeItems['Road_{0}_itemLanes_lane_{1}_position_x2'.format(roadIdx, laneIdx)] = QTreeWidgetItem(itemPosition, ['x2', lane.position2.x])
+                self.treeItems['Road_{0}_itemLanes_lane_{1}_position_y2'.format(roadIdx, laneIdx)] = QTreeWidgetItem(itemPosition, ['y2', lane.position2.y])
                 
     def toXmlString(self):
         
@@ -345,6 +370,10 @@ class CCTVConfiguration():
         self.header.showInTree(root)
         self.roadInfo.showInTree(root)
         self.virtualGate.showInTree(root)
+        
+        tree.expandAll()
+        tree.resizeColumnToContents(0)
+        tree.resizeColumnToContents(1)
         
     def findLanesOfRoad(self, roadId, linkId):
         lanes = []

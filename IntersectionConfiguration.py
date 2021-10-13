@@ -108,6 +108,10 @@ class IntersectionConfiguration():
         roadInfo = self.getRoadInfo()
         roadInfo.showInTree(root)
         
+        tree.expandAll()
+        tree.resizeColumnToContents(0)
+        tree.resizeColumnToContents(1)
+        
 if __name__ == "__main__":
     
     xmlPath = 'D:/_Course/Project/LabelTool/data/Intersection_configuration.xml'
