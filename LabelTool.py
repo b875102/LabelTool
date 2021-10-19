@@ -1,4 +1,5 @@
 import sys
+import copy
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from Label import Label
@@ -7,16 +8,30 @@ from FileHelper import FileHelper
 from OpenFileDialog import OpenFileDialog
 from CCTVConfiguration import CCTVConfiguration
 from IntersectionConfiguration import IntersectionConfiguration
-from CCTVConfigurationDialog import CCTVConfigurationDialog
+#from CCTVConfigurationDialog import CCTVConfigurationDialog
+
+#from CCTVConfiguration import CCTVConfiguration
+#from CCTVConfiguration import Header as CCTVHeader
+#from CCTVConfiguration import RoadInfo as CCTVRoadInfo
+#from CCTVConfiguration import VirtualGate as CCTVVirtualGate
+from CCTVConfiguration import Road as CCTVRoad
+from CCTVConfiguration import Lane as CCTVLane
+from CCTVConfiguration import ReferencePoint as CCTVReferencePoint
 
 class LabelTool(QtWidgets.QMainWindow):
     
     _SCALING_BASE = 100
     _SCALING_MIN = 10
     
+    _TABLE_COLUMNS_REFERENCE_POINTS = 4 + 1
+    _TABLE_COLUMNS_ROAD = 9 + 1
+    _TABLE_COLUMNS_LANE = 5 + 2
+    
+    _DEFAULT_VALUE_CELL = '0'
+    
     def __init__(self):
         super(LabelTool, self).__init__()
-        uic.loadUi('LabelTool.ui', self)
+        uic.loadUi('LabelTool2.ui', self)
         
         self.init = True
         
@@ -26,7 +41,7 @@ class LabelTool(QtWidgets.QMainWindow):
         self.lblCoordinate = QtWidgets.QLabel('')
         self.statusBar().addPermanentWidget(self.lblCoordinate)
         self.openFileDialog = OpenFileDialog(self)
-        self.cctvConfigurationDialog = CCTVConfigurationDialog(self)
+        #self.cctvConfigurationDialog = CCTVConfigurationDialog(self)
         
         self.image = None
         self.illustrationImage = None
@@ -36,6 +51,9 @@ class LabelTool(QtWidgets.QMainWindow):
         self.actionOpen_Video.triggered.connect(self.OpenVideo_Click)
         self.actionOpen_Images.triggered.connect(self.OpenImages_Click)
         #self.actionOpen_Images_Patty_Label.triggered.connect(self.OpenImages_Patty_Label_Click)
+        self.actionIllustration_Image.triggered.connect(self.Illustration_Image_Click)
+        self.actionIntersection_Configuration.triggered.connect(self.Intersection_Configuration_Click)
+        self.actionCCTV_Configuration.triggered.connect(self.CCTV_Configuration_Click)
         
         #Widget
         self.hsldScaling.valueChanged.connect(self.SetSilder)
@@ -43,7 +61,28 @@ class LabelTool(QtWidgets.QMainWindow):
         self.lstFile.itemClicked.connect(self.FileList_Clicked)
         self.treeCCTVConfig.itemClicked.connect(self.TreeCCTVConfig_ItemClicked)
         self.treeIntersectionConfig.itemClicked.connect(self.TreeIntersectionConfig_ItemClicked)
+
+        #CCTV Config Widget
+        self.__initialTableHeader()
         
+        self.tblReferencePoints.itemChanged.connect(self.__tblReferencePoints_ItemChanged)
+        
+        self.btnAddPoint.clicked.connect(self.__AddPoint)
+        self.btnDeletePoint.clicked.connect(self.__DeletePoint)
+        
+        self.tblRoad.itemChanged.connect(self.__tblRoad_ItemChanged)
+        #self.tblRoad.currentItemChanged.connect(self.__tblRoad_CurrentItemChanged)
+        self.tblRoad.itemSelectionChanged.connect(self.__tblRoad_ItemSelectionChanged)
+        
+        self.btnAddRoad.clicked.connect(self.__AddRoad)
+        self.btnDeleteRoad.clicked.connect(self.__DeleteRoad)
+        
+        self.tblLane.itemChanged.connect(self.__tblLane_ItemChanged)
+        
+        self.btnAddLane.clicked.connect(self.__AddLane)
+        self.btnDeleteLane.clicked.connect(self.__DeleteLane)
+        
+        self.keepRoadIdxOfLanes = -1
 
         #set attribute
         self.actionOpen_Video.setVisible(False)
@@ -52,6 +91,7 @@ class LabelTool(QtWidgets.QMainWindow):
         self.hsldScaling.setValue(100)
         self.dwgFileList.close()
         self.dwgLabelList.close()
+        self.dwgCCTVConfig.close()
         
         print('sizeHint', self.sizeHint())
         
@@ -67,6 +107,9 @@ class LabelTool(QtWidgets.QMainWindow):
         self.fileHelper = FileHelper()
         self.intersectionConfig = IntersectionConfiguration()
         self.cctvConfig = CCTVConfiguration()
+        
+        #slot
+        #self.txtCCTV.setText(self.cctvConfig..textChanged
         
         self.init = False
     def show(self):
@@ -105,67 +148,25 @@ class LabelTool(QtWidgets.QMainWindow):
         pass
     
     def OpenImages_Click(self):
-        print('OpenImages_Click')
+        #print('OpenImages_Click')
         
-        '''
-        self.OpenImage('D:/_Course/Project/LabelTool/data/192.168.111.26_園區二路與研發二路球機(12)_道路淨空.png')
-        self.OpenIllustrationImage('D:/_Course/Project/LabelTool/data/illustration.png')
-        
-        self.intersectionConfig.loadXml('D:/_Course/Project/LabelTool/data/Intersection_configuration.xml')
-        self.intersectionConfig.showInTree(self.treeIntersectionConfig)
-        
-        self.cctvConfig.loadXml('D:/_Course/Project/LabelTool/data/cctv_configuration.xml')
-        self.cctvConfig.showInTree(self.treeCCTVConfig)
-        
-        
+        ''''''
         self.openFileDialog.txtIllustration.setText('D:/_Course/Project/LabelTool/data/illustration.png')
         self.openFileDialog.txtCCTVImage.setText('D:/_Course/Project/LabelTool/data/192.168.111.26_園區二路與研發二路球機(12)_道路淨空.png')
         self.openFileDialog.txtIntersectionConfiguration.setText('D:/_Course/Project/LabelTool/data/Intersection_configuration.xml')
         self.openFileDialog.txtCCTVConfiguration.setText('D:/_Course/Project/LabelTool/data/cctv_configuration.xml')
-        '''
+        
         
         if self.openFileDialog.exec() == QtWidgets.QDialog.Accepted:
             if self.openFileDialog.checkResult():
                 
+                self.treeIntersectionConfig.clear()
                 self.treeCCTVConfig.clear()
                 
                 print('QDialog.Accepted', self.openFileDialog.getResult())
                 dialogResult = self.openFileDialog.getResult()
                 
-                self.OpenImage(dialogResult['CCTVImage'])
-                self.OpenIllustrationImage(dialogResult['Illustration'])
-                
-                self.intersectionConfig.loadXml(dialogResult['IntersectionConfiguration'])
-                self.intersectionConfig.showInTree(self.treeIntersectionConfig)
-                
-                if dialogResult['CCTVConfiguration'] != '':
-                    self.cctvConfig.loadXmlFile(dialogResult['CCTVConfiguration'])
-                    self.cctvConfigurationDialog.LoadCCTVConfig(self.cctvConfig)
-                else:
-                    self.cctvConfigurationDialog.LoadIntersectionConfig(self.intersectionConfig)
-                    
-                execResult = self.cctvConfigurationDialog.exec()
-                
-                self.cctvConfig = self.cctvConfigurationDialog.GetResult(execResult)
-                self.cctvConfig.showInTree(self.treeCCTVConfig)
-                
-                labels = []
-                for roadIdx, road in enumerate(self.cctvConfig.virtualGate.roads):
-                    p1, p2 = road.position1, road.position2
-                    
-                    if p1.hasValue() and p2.hasValue:
-                        labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx))
-                        
-                    for laneIdx, lane in enumerate(road.lanes):
-                        p1, p2 = lane.position1, lane.position2
-                        
-                        if p1.hasValue() and p2.hasValue:
-                            labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx, laneIdx))
-                    
-                self.image.labels = labels
-                self.Label_Changed(self.image.labels)
-                self.SetSilder()                    
-                
+                self.OpenImages(dialogResult)
             else:
                 print('QDialog.Invalid')
         else:
@@ -177,6 +178,18 @@ class LabelTool(QtWidgets.QMainWindow):
         self.pngfiles = self.fileHelper.GetFilesP(self, 'Open Images (Patty Label)')
         self.LoadImages(self.pngfiles)
     
+    def Illustration_Image_Click(self):
+        #print('Illustration_Image_Click')
+        self.dwgIllustrationImage.show()
+    
+    def Intersection_Configuration_Click(self):
+        #print('Intersection_Configuration_Click')
+        self.dwgIntersectionConfiguration.show()
+    
+    def CCTV_Configuration_Click(self):
+        #print('CCTV_Configuration_Click')
+        self.dwgCCTVConfiguration.show()
+        
     def FileList_Clicked(self, item):
         fileName = item.text()
         if fileName != '':
@@ -208,6 +221,44 @@ class LabelTool(QtWidgets.QMainWindow):
             item = self.lstFile.item(0)
             self.FileList_Clicked(item)
 
+    def OpenImages(self, fileDict):
+        
+        self.OpenImage(fileDict['CCTVImage'])
+        self.OpenIllustrationImage(fileDict['Illustration'])
+        
+        self.intersectionConfig.loadXml(fileDict['IntersectionConfiguration'])
+        self.intersectionConfig.showInTree(self.treeIntersectionConfig)
+        
+        if fileDict['CCTVConfiguration'] != '':
+            self.cctvConfig.loadXmlFile(fileDict['CCTVConfiguration'])
+            #self.cctvConfigurationDialog.LoadCCTVConfig(self.cctvConfig)
+        else:
+            self.cctvConfig = self.intersectionConfig.toCCTVConfiguration()
+            #self.cctvConfigurationDialog.LoadIntersectionConfig(self.intersectionConfig)
+        
+        self.__ShowConfig(self.cctvConfig)
+        
+        #execResult = self.cctvConfigurationDialog.exec()
+        #self.cctvConfig = self.cctvConfigurationDialog.GetResult(execResult)
+        #self.cctvConfig.showInTree(self.treeCCTVConfig)
+        
+        labels = []
+        for roadIdx, road in enumerate(self.cctvConfig.virtualGate.roads):
+            p1, p2 = road.position1, road.position2
+            
+            if p1.hasValue() and p2.hasValue:
+                labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx))
+                
+            for laneIdx, lane in enumerate(road.lanes):
+                p1, p2 = lane.position1, lane.position2
+                
+                if p1.hasValue() and p2.hasValue:
+                    labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx, laneIdx))
+            
+        self.image.labels = labels
+        self.Label_Changed(self.image.labels)
+        self.SetSilder()       
+    
     def OpenImage(self, imagePath):
         
         if self.image:
@@ -247,32 +298,47 @@ class LabelTool(QtWidgets.QMainWindow):
         
     @QtCore.pyqtSlot(Label)
     def Label_Selected(self, label):
-        #print('Label_Selected', label.toString())
-        #print('Label_Selected', label.roadIdx, label.laneIdx)
+        
+        self.tabCCTVConfiguration.setCurrentIndex(1)
         
         roadIdx = label.roadIdx
         laneIdx = label.laneIdx
-        
-        itemKey = ''
+
+        #itemKey = ''
         try:
             if roadIdx > -1 and laneIdx > -1:
-                itemKey = 'Road_{0}_itemLanes_lane_{1}_position'.format(roadIdx, laneIdx)
+                #itemKey = 'Road_{0}_itemLanes_lane_{1}_position'.format(roadIdx, laneIdx)
+                item = self.tblRoad.item(roadIdx, 5)
+                #self.tblRoad.setCurrentItem(item)
+                self.tblRoad.setItemSelected(item, True)
+
+                
+                item = self.tblLane.item(laneIdx, 1)
+                #self.tblLane.setCurrentItem(item)
+                self.tblLane.setItemSelected(item, True)
+                
         except:
             try:
                 if roadIdx > -1:
-                    itemKey = 'Road_{0}_position'.format(roadIdx)
+                    #itemKey = 'Road_{0}_position'.format(roadIdx)
+                    item = self.tblRoad.item(roadIdx, 5)
+                    self.tblRoad.setCurrentItem(item)
+                    
             except:
                 pass
+        
+        print('itemKey', roadIdx, laneIdx)
+        
+        '''
         
         print('itemKey', roadIdx, laneIdx, itemKey)
         
         if itemKey != '':
             item = self.cctvConfig.virtualGate.treeItems[itemKey]
-            #item.setSelected(True)
-            #self.treeCCTVConfig.itemClicked(item, 0)
-            #self.treeCCTVConfig.scrollToItem(item)
             self.treeCCTVConfig.setCurrentItem(item, 0)
-
+        '''
+        
+        
     def DockImage(self):
         #print('DockImage', self.init)
         if self.image:
@@ -295,3 +361,255 @@ class LabelTool(QtWidgets.QMainWindow):
             scaling = self.hsldScaling.value()
             self.image.ScaleImage(scaling)
         
+    def __initialTableHeader(self):
+        
+        header = ['img_x', 'img_y', 'lat', 'lng', 'refIdx']
+        self.tblReferencePoints.setColumnCount(self._TABLE_COLUMNS_REFERENCE_POINTS)
+        self.tblReferencePoints.setHorizontalHeaderLabels(header)
+        self.tblReferencePoints.hideColumn(4)
+        
+        header = ['road_id', 'link_id', 'name', 'direction', 'section', 'x1', 'y1', 'x2', 'y2', 'roadIdx']
+        self.tblRoad.setColumnCount(self._TABLE_COLUMNS_ROAD)
+        self.tblRoad.setHorizontalHeaderLabels(header)
+        self.tblRoad.hideColumn(9)
+        
+        header = ['lane_id', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
+        self.tblLane.setColumnCount(self._TABLE_COLUMNS_LANE)
+        self.tblLane.setHorizontalHeaderLabels(header)
+        self.tblLane.hideColumn(5)
+        self.tblLane.hideColumn(6)
+        
+    def __ShowConfig(self, cctvConfig):
+        
+        self.tblReferencePoints.setRowCount(0)
+        self.tblRoad.setRowCount(0)
+        self.tblLane.setRowCount(0)
+        
+        header = cctvConfig.header
+        
+        self.txtCCTV.setText(header.cctv)
+        self.txtVersion.setText(header.version)
+        self.txtDate.setText(header.date)
+        self.txtIntersectionId.setText(header.intersection_id)
+        self.txtDeviceIp.setText(header.device_ip)
+        self.txtCameraPositionLat.setText(header.camera_position.latitude)
+        self.txtCameraPositionLng.setText(header.camera_position.longitude)
+        
+        roadInfo = cctvConfig.roadInfo
+        refPointList = []
+        for idx, ref_point in enumerate(roadInfo.reference_points):
+            values = ref_point.getValues()
+            values.append(str(idx))
+            refPointList.append(values)
+        self.__AddTableRow(self.tblReferencePoints, refPointList)
+        
+        virtualGate = cctvConfig.virtualGate
+        roadList = []
+        for idx, road in enumerate(virtualGate.roads):
+            values = road.getValues()
+            values.append(str(idx))
+            roadList.append(values)
+        self.__AddTableRow(self.tblRoad, roadList)
+        
+    def __AddTableRow(self, tbl, contents):
+        rowNum = len(contents)
+        if rowNum > 0:
+            columnNum = len(contents[0])
+            for rIdx in range(rowNum):
+                row_count = tbl.rowCount()
+                tbl.insertRow(row_count)
+                row = contents[rIdx]
+                for cIdx in range(columnNum):
+                    item = QtWidgets.QTableWidgetItem(row[cIdx])
+                    item.setTextAlignment(QtCore.Qt.AlignRight)
+                    tbl.setItem(row_count, cIdx, item)      
+
+    def __tblReferencePoints_ItemChanged(self, item):
+        self.__tblItemChanged(self.tblReferencePoints, item)
+
+    def __tblRoad_ItemChanged(self, item):
+        self.__tblItemChanged(self.tblRoad, item)
+        
+    def __tblLane_ItemChanged(self, item):
+        self.__tblItemChanged(self.tblLane, item)
+        
+    def __tblItemChanged(self, tbl, item):
+        tbl.resizeRowsToContents()
+        tbl.resizeColumnsToContents()
+    
+    def __tblRoad_ItemSelectionChanged(self):
+        
+        currentRow = self.tblRoad.currentRow()
+        
+        if currentRow >= 0:
+            
+            if self.keepRoadIdxOfLanes > -1:
+                self.__RefreshLanes(self.keepRoadIdxOfLanes)
+    
+            self.tblLane.setRowCount(0)
+
+            self.keepRoadIdxOfLanes = int(self.tblRoad.item(currentRow, self._TABLE_COLUMNS_ROAD - 1).text())
+            
+            lanes = self.cctvConfig.virtualGate.roads[self.keepRoadIdxOfLanes].lanes
+            
+            laneList = []
+            
+            for idx, lane in enumerate(lanes):
+                values = lane.getValues()
+                values.append(str(self.keepRoadIdxOfLanes))
+                values.append(str(idx))
+                laneList.append(values)
+                
+            self.__AddTableRow(self.tblLane, laneList)
+        else:
+            self.keepRoadIdxOfLanes = -1
+            
+    def __AddPoint(self):
+        
+        rowCount = str(self.tblReferencePoints.rowCount())
+        cctvRefPoint = CCTVReferencePoint(None)
+        values = cctvRefPoint.getValues()
+        values.append(rowCount)
+        
+        self.__AddTableRow(self.tblReferencePoints, [values])
+        self.cctvConfig.roadInfo.reference_points.append(cctvRefPoint)
+
+    def __DeletePoint(self):
+        self.__DeleteTableRow(self.tblReferencePoints)
+        self.__RefreshReferencePoints()
+        self.__ShowConfig(self.cctvConfig)
+        
+    def __AddRoad(self):
+        
+        rowCount = str(self.tblRoad.rowCount())
+        
+        cctvRoad = CCTVRoad(None)
+        #cctvRoad.road_id = rowCount
+        values = cctvRoad.getValues()
+        #values[0] = rowCount
+        values.append(rowCount)
+        
+        self.__AddTableRow(self.tblRoad, [values])
+        self.cctvConfig.virtualGate.roads.append(cctvRoad)
+        
+    def __DeleteRoad(self):
+        self.__DeleteTableRow(self.tblRoad)
+        self.__RefreshRoads()
+        self.__ShowConfig(self.cctvConfig)
+        
+    def __AddLane(self):
+        
+        rowCount = str(self.tblLane.rowCount())
+        
+        cctvLane = CCTVLane(None)
+        #cctvLane.lane_id = rowCount
+        values = cctvLane.getValues()
+        #values[0] = rowCount
+        values.append(str(self.keepRoadIdxOfLanes))
+        values.append(rowCount)
+        
+        self.__AddTableRow(self.tblLane, [values])
+        self.cctvConfig.virtualGate.roads[self.keepRoadIdxOfLanes].lanes.append(cctvLane)
+        
+    def __DeleteLane(self):
+        self.__DeleteTableRow(self.tblLane)
+    
+    def __AddTableRow(self, tbl, contents):
+        rowNum = len(contents)
+        if rowNum > 0:
+            columnNum = len(contents[0])
+            for rIdx in range(rowNum):
+                row_count = tbl.rowCount()
+                tbl.insertRow(row_count)
+                row = contents[rIdx]
+                for cIdx in range(columnNum):
+                    item = QtWidgets.QTableWidgetItem(row[cIdx])
+                    item.setTextAlignment(QtCore.Qt.AlignRight)
+                    tbl.setItem(row_count, cIdx, item)
+                    
+    def __DeleteTableRow(self, tbl):
+        selectedRow = tbl.currentRow()
+        tbl.removeRow(selectedRow)
+        
+    def __RefreshHeader(self):
+        
+        self.cctvConfig.header.cctv = self.txtCCTV.text()
+        #self.cctvConfig.header.name = safeNodeText(header.find('name'))
+        self.cctvConfig.header.version = self.txtVersion.text()
+        self.cctvConfig.header.date = self.txtDate.text()
+        self.cctvConfig.header.intersection_id = self.txtIntersectionId.text()
+        self.cctvConfig.header.device_ip = self.txtDeviceIp.text()
+        self.cctvConfig.header.camera_position.latitude = self.txtCameraPositionLat.text()
+        self.cctvConfig.header.camera_position.longitude = self.txtCameraPositionLng.text()
+        
+    def __RefreshReferencePoints(self):
+        
+        self.cctvConfig.roadInfo.reference_points.clear()
+        
+        rowCount = self.tblReferencePoints.rowCount()
+        
+        for idx in range(rowCount):
+            
+            ref_point = CCTVReferencePoint(None)
+            ref_point.img_position.x = self.tblReferencePoints.item(idx, 0).text()
+            ref_point.img_position.y = self.tblReferencePoints.item(idx, 1).text()
+            ref_point.geograph_position.latitude = self.tblReferencePoints.item(idx, 2).text()
+            ref_point.geograph_position.longitude = self.tblReferencePoints.item(idx, 3).text()
+            
+            self.cctvConfig.roadInfo.reference_points.append(ref_point)
+        
+    def __RefreshRoads(self):
+        
+        keepRoads = copy.deepcopy(self.cctvConfig.virtualGate.roads)
+        
+        self.cctvConfig.virtualGate.roads.clear()
+        
+        rowCount = self.tblRoad.rowCount()
+        
+        for idx in range(rowCount):
+            
+            cctvRoad = CCTVRoad(None)
+            cctvRoad.road_id = self.tblRoad.item(idx, 0).text()
+            cctvRoad.link_id = self.tblRoad.item(idx, 1).text()
+            cctvRoad.name = self.tblRoad.item(idx, 2).text()
+            cctvRoad.direction = self.tblRoad.item(idx, 3).text()
+            cctvRoad.section = self.tblRoad.item(idx, 4).text()
+            
+            cctvRoad.position1.x = self.tblRoad.item(idx, 5).text()
+            cctvRoad.position1.y = self.tblRoad.item(idx, 6).text()
+            cctvRoad.position2.x = self.tblRoad.item(idx, 7).text()
+            cctvRoad.position2.y = self.tblRoad.item(idx, 8).text()
+            
+            cctvRoad.lanes = copy.deepcopy(keepRoads[int(self.tblRoad.item(idx, 9).text())].lanes)
+            
+            self.cctvConfig.virtualGate.roads.append(cctvRoad)
+        
+    def __RefreshLanes(self, roadIdx):
+        
+        if roadIdx >= 0:
+            self.cctvConfig.virtualGate.roads[roadIdx].lanes.clear()
+            
+            rowCount = self.tblLane.rowCount()
+            
+            for idx in range(rowCount):
+                
+                cctvLane = CCTVLane(None)
+                cctvLane.lane_id = self.tblLane.item(idx, 0).text()
+                cctvLane.position1.x = self.tblLane.item(idx, 1).text()
+                cctvLane.position1.y = self.tblLane.item(idx, 2).text()
+                cctvLane.position2.x = self.tblLane.item(idx, 3).text()
+                cctvLane.position2.y = self.tblLane.item(idx, 4).text()
+                
+                self.cctvConfig.virtualGate.roads[roadIdx].lanes.append(cctvLane)      
+                
+    def GetResult(self):
+
+        if self.keepRoadIdxOfLanes > -1:
+            self.__RefreshLanes(self.keepRoadIdxOfLanes)
+        
+        self.__RefreshHeader()
+        self.__RefreshReferencePoints()
+        self.__RefreshRoads()
+        
+        return self.cctvConfig
+              

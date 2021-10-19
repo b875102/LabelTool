@@ -3,6 +3,13 @@ import xml.etree.ElementTree as ElementTree
 from PyQt5.QtWidgets import QTreeWidgetItem
 #from PyQt5.QtCore import QPoint
 
+from CCTVConfiguration import CCTVConfiguration
+from CCTVConfiguration import Header as CCTVHeader
+from CCTVConfiguration import RoadInfo as CCTVRoadInfo
+from CCTVConfiguration import VirtualGate as CCTVVirtualGate
+from CCTVConfiguration import Road as CCTVRoad
+from CCTVConfiguration import Lane as CCTVLane
+from CCTVConfiguration import ReferencePoint as CCTVReferencePoint
 
 class Header():
     
@@ -79,12 +86,19 @@ class Road():
 class IntersectionConfiguration():
     
     def __init__(self, xmlPath = ''):
+
+        self.root = None
+        self.header = None
+        self.roadInfo = None
+        
         if xmlPath != '':
             self.loadXml(xmlPath)
     
     def loadXml(self, xmlPath):
         self.tree = ElementTree.parse(xmlPath)
         self.root = self.tree.getroot()
+        self.header = self.getHeader()
+        self.roadInfo = self.getRoadInfo()
         
     def getHeader(self):
         header = Header(self.root.find('header'))
@@ -111,6 +125,49 @@ class IntersectionConfiguration():
         tree.expandAll()
         tree.resizeColumnToContents(0)
         tree.resizeColumnToContents(1)
+        
+    def toCCTVConfiguration(self):
+        
+        cctvHeader = CCTVHeader(None)
+        cctvRoadInfo = CCTVRoadInfo(None)
+        cctvVirtualGate = CCTVVirtualGate(None)
+        
+        intersectionHeader = self.header
+        
+        cctvHeader.name = intersectionHeader.name
+        cctvHeader.version = intersectionHeader.version
+        cctvHeader.date = intersectionHeader.date
+        cctvHeader.intersection_id = intersectionHeader.intersection_id
+        
+        intersectionRoad = self.roadInfo
+        
+        for idxRoad, isRoad in enumerate(intersectionRoad.roads):
+            
+            cctvRoad = CCTVRoad(None)
+            
+            cctvRoad.road_id = str(idxRoad)
+            cctvRoad.link_id = isRoad.link_id
+            cctvRoad.name = isRoad.name
+            cctvRoad.direction = isRoad.direction
+            cctvRoad.section = isRoad.section
+            
+            #cctvRoad.position1 = PointPosition()
+            #cctvRoad.position2 = PointPosition()
+        
+            for idxLane in range(int(isRoad.lane_num)):
+                
+                lane = CCTVLane(None)
+                lane.lane_id = str(idxLane)
+                cctvRoad.lanes.append(lane)
+            
+            cctvVirtualGate.roads.append(cctvRoad)
+
+        cctvConfig = CCTVConfiguration()
+        cctvConfig.header = cctvHeader
+        cctvConfig.roadInfo = cctvRoadInfo
+        cctvConfig.virtualGate = cctvVirtualGate
+        
+        return cctvConfig
         
 if __name__ == "__main__":
     
