@@ -3,6 +3,8 @@ import copy
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from Label import Label
+from Label import RoadType
+
 from Image import Image
 from FileHelper import FileHelper
 from OpenFileDialog import OpenFileDialog
@@ -231,33 +233,11 @@ class LabelTool(QtWidgets.QMainWindow):
         
         if fileDict['CCTVConfiguration'] != '':
             self.cctvConfig.loadXmlFile(fileDict['CCTVConfiguration'])
-            #self.cctvConfigurationDialog.LoadCCTVConfig(self.cctvConfig)
         else:
             self.cctvConfig = self.intersectionConfig.toCCTVConfiguration()
-            #self.cctvConfigurationDialog.LoadIntersectionConfig(self.intersectionConfig)
         
-        self.__ShowConfig(self.cctvConfig)
-        
-        #execResult = self.cctvConfigurationDialog.exec()
-        #self.cctvConfig = self.cctvConfigurationDialog.GetResult(execResult)
-        #self.cctvConfig.showInTree(self.treeCCTVConfig)
-        
-        labels = []
-        for roadIdx, road in enumerate(self.cctvConfig.virtualGate.roads):
-            p1, p2 = road.position1, road.position2
-            
-            if p1.hasValue() and p2.hasValue:
-                labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx))
-                
-            for laneIdx, lane in enumerate(road.lanes):
-                p1, p2 = lane.position1, lane.position2
-                
-                if p1.hasValue() and p2.hasValue:
-                    labels.append(Label(p1.toQPoint(), p2.toQPoint(), roadIdx, laneIdx))
-            
-        self.image.labels = labels
-        self.Label_Changed(self.image.labels)
-        self.SetSilder()       
+        self.__refreshCCTVConfigAndLabel(self.cctvConfig)
+     
     
     def OpenImage(self, imagePath):
         
@@ -294,50 +274,64 @@ class LabelTool(QtWidgets.QMainWindow):
         self.lstLabel.clear()
         for label in labels:
             self.lstLabel.addItem(label.toString())
-            print(label.toString())
+            #print(label.toString())
+            
+
+            if label.roadType == RoadType.Road:
+
+                roadIdx = label.roadIdx
+            
+                self.cctvConfig.virtualGate.roads[roadIdx].position1.x = str(label.shape.p1.x())
+                self.cctvConfig.virtualGate.roads[roadIdx].position1.y = str(label.shape.p1.y())
+                self.cctvConfig.virtualGate.roads[roadIdx].position2.x = str(label.shape.p2.x())
+                self.cctvConfig.virtualGate.roads[roadIdx].position2.y = str(label.shape.p2.y())
+                
+                self.tblRoad.item(roadIdx, 5).setText(str(label.shape.p1.x()))
+                self.tblRoad.item(roadIdx, 6).setText(str(label.shape.p1.y()))
+                self.tblRoad.item(roadIdx, 7).setText(str(label.shape.p2.x()))
+                self.tblRoad.item(roadIdx, 8).setText(str(label.shape.p2.y()))
+                
+            elif label.roadType == RoadType.Lane:
+                
+                (roadIdx, laneIdx) = label.roadIdx
+                
+                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position1.x = str(label.shape.p1.x())
+                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position1.y = str(label.shape.p1.y())
+                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position2.x = str(label.shape.p2.x())
+                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position2.y = str(label.shape.p2.y())   
+                
+                if self.keepRoadIdxOfLanes == roadIdx:
+
+                    self.tblLane.item(laneIdx, 1).setText(str(label.shape.p1.x()))
+                    self.tblLane.item(laneIdx, 2).setText(str(label.shape.p1.y()))
+                    self.tblLane.item(laneIdx, 3).setText(str(label.shape.p2.x()))
+                    self.tblLane.item(laneIdx, 4).setText(str(label.shape.p2.y()))
+                
+        #self.__refreshCCTVConfigAndLabel(self.cctvConfig)
         
     @QtCore.pyqtSlot(Label)
     def Label_Selected(self, label):
         
         self.tabCCTVConfiguration.setCurrentIndex(1)
         
-        roadIdx = label.roadIdx
-        laneIdx = label.laneIdx
+        roadIdx = -1
+        laneIdx = -1
+        
+        if label.roadType == RoadType.Road:
+            roadIdx = label.roadIdx
+        elif label.roadType == RoadType.Lane:
+            (roadIdx, laneIdx) = label.roadIdx
+            
+        if roadIdx > -1:
+            item = self.tblRoad.item(roadIdx, 0)
+            self.tblRoad.setCurrentItem(item)
+            
+        if laneIdx > -1:
+            item = self.tblLane.item(laneIdx, 0)
+            self.tblLane.setCurrentItem(item)
+        
+        #print('itemKey', roadIdx, laneIdx)
 
-        #itemKey = ''
-        try:
-            if roadIdx > -1 and laneIdx > -1:
-                #itemKey = 'Road_{0}_itemLanes_lane_{1}_position'.format(roadIdx, laneIdx)
-                item = self.tblRoad.item(roadIdx, 5)
-                #self.tblRoad.setCurrentItem(item)
-                self.tblRoad.setItemSelected(item, True)
-
-                
-                item = self.tblLane.item(laneIdx, 1)
-                #self.tblLane.setCurrentItem(item)
-                self.tblLane.setItemSelected(item, True)
-                
-        except:
-            try:
-                if roadIdx > -1:
-                    #itemKey = 'Road_{0}_position'.format(roadIdx)
-                    item = self.tblRoad.item(roadIdx, 5)
-                    self.tblRoad.setCurrentItem(item)
-                    
-            except:
-                pass
-        
-        print('itemKey', roadIdx, laneIdx)
-        
-        '''
-        
-        print('itemKey', roadIdx, laneIdx, itemKey)
-        
-        if itemKey != '':
-            item = self.cctvConfig.virtualGate.treeItems[itemKey]
-            self.treeCCTVConfig.setCurrentItem(item, 0)
-        '''
-        
         
     def DockImage(self):
         #print('DockImage', self.init)
@@ -361,6 +355,29 @@ class LabelTool(QtWidgets.QMainWindow):
             scaling = self.hsldScaling.value()
             self.image.ScaleImage(scaling)
         
+    def __refreshCCTVConfigAndLabel(self, cctvConfig):
+        self.__ShowConfig(cctvConfig)
+        self.image.labels = self.__cctvConfig2Label(cctvConfig)
+        #self.Label_Changed(self.image.labels)
+        self.SetSilder() 
+        
+        
+    def __cctvConfig2Label(self, cctvConfig):
+        
+        labels = []
+        for roadIdx, road in enumerate(cctvConfig.virtualGate.roads):
+            p1, p2 = road.position1, road.position2
+            
+            #if p1.hasValue() and p2.hasValue:
+            labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx))
+                
+            for laneIdx, lane in enumerate(road.lanes):
+                p1, p2 = lane.position1, lane.position2
+                
+                #if p1.hasValue() and p2.hasValue:
+                labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Lane, (roadIdx, laneIdx)))
+        return labels
+    
     def __initialTableHeader(self):
         
         header = ['img_x', 'img_y', 'lat', 'lng', 'refIdx']
@@ -438,6 +455,7 @@ class LabelTool(QtWidgets.QMainWindow):
         tbl.resizeColumnsToContents()
     
     def __tblRoad_ItemSelectionChanged(self):
+        #print('__tblRoad_ItemSelectionChanged')
         
         currentRow = self.tblRoad.currentRow()
         
@@ -492,10 +510,15 @@ class LabelTool(QtWidgets.QMainWindow):
         self.__AddTableRow(self.tblRoad, [values])
         self.cctvConfig.virtualGate.roads.append(cctvRoad)
         
+        self.__refreshCCTVConfigAndLabel(self.cctvConfig)
+        
+        self.image.lockForNewLabel(RoadType.Road, int(rowCount))
+        
     def __DeleteRoad(self):
         self.__DeleteTableRow(self.tblRoad)
         self.__RefreshRoads()
-        self.__ShowConfig(self.cctvConfig)
+        
+        self.__refreshCCTVConfigAndLabel(self.cctvConfig)
         
     def __AddLane(self):
         
@@ -511,8 +534,16 @@ class LabelTool(QtWidgets.QMainWindow):
         self.__AddTableRow(self.tblLane, [values])
         self.cctvConfig.virtualGate.roads[self.keepRoadIdxOfLanes].lanes.append(cctvLane)
         
+        #self.__refreshCCTVConfigAndLabel(self.cctvConfig)
+        self.image.labels = self.__cctvConfig2Label(self.cctvConfig)
+        self.SetSilder() 
+        
+        self.image.lockForNewLabel(RoadType.Lane, (self.keepRoadIdxOfLanes, int(rowCount)))
+        
     def __DeleteLane(self):
         self.__DeleteTableRow(self.tblLane)
+        
+        self.__refreshCCTVConfigAndLabel(self.cctvConfig)
     
     def __AddTableRow(self, tbl, contents):
         rowNum = len(contents)

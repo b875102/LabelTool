@@ -6,14 +6,19 @@ from Line import Line
 class LabelType(Enum):
     Line = 0
     #Rectangle = 1
+    
+class RoadType(Enum):
+    Road = 0
+    Lane = 1
 
 class Label():
 
-    def __init__(self, p1, p2, roadIdx = None, laneIdx = None, labelType = LabelType.Line):
+    def __init__(self, p1, p2, roadType = RoadType.Road, roadIdx = None, labelType = LabelType.Line):
         
         self.labelType = labelType
+        
+        self.roadType = roadType
         self.roadIdx = roadIdx
-        self.laneIdx = laneIdx
         
         self.shape = Line(p1, p2)
         

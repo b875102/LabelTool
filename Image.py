@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
 import copy
 #from LabelList import LabelList
 from Label import Label
+from Label import RoadType
 
 class Image(QtCore.QObject):
     
@@ -49,6 +50,12 @@ class Image(QtCore.QObject):
         self.pivotPoint = None
         self.movingBasePoint = None
         
+        #lock label
+        self.locked = False
+        self.lockedLabel = None
+        self.lockedLabelIndex = -1
+        
+        
     def __del__(self):
         pass
     
@@ -89,28 +96,32 @@ class Image(QtCore.QObject):
             currentPosition = self.cursorPosition(event.pos())
             #self.lastPoint = event.pos()# + QPoint(-9, -9)
             
-            idx = -1
-            self.selectedLabel = None
-            for label in self.labels:
-                idx += 1
-                if label.selected:
-                    self.selectedLabel = label
-                    self.selectedIndex = idx
-                    self.pivotPoint = self.selectedLabel.pivotPoint
-                    
-                    if not self.pivotPoint:
-                        self.movingBasePoint = currentPosition
-                    break
-            
-            if self.selectedLabel:
-                #print('press moving')
-                self.moving = True
+            if not self.locked:
+
+                idx = -1
+                self.selectedLabel = None
+                for label in self.labels:
+                    idx += 1
+                    if label.selected:
+                        self.selectedLabel = label
+                        self.selectedIndex = idx
+                        self.pivotPoint = self.selectedLabel.pivotPoint
+                        
+                        if not self.pivotPoint:
+                            self.movingBasePoint = currentPosition
+                        break
+                
+                if self.selectedLabel:
+                    #print('press moving')
+                    self.moving = True
+                else:
+                    #print('press drawing')
+                    self.drawing = True
+                    self.lastPoint = currentPosition
             else:
-                #print('press drawing')
                 self.drawing = True
                 self.lastPoint = currentPosition
-                
-
+                    
     def mouseMoveEvent(self, event):
         #print('mouseMoveEvent')
         #print('drawing: ', self.drawing, ', moving: ', self.moving)
@@ -164,20 +175,35 @@ class Image(QtCore.QObject):
                 
             if self.drawing:
                 #print('release drawing')
-                if Label.isDifferent(self.lastPoint, currentPosition):
-                    self.labels.append(Label(self.lastPoint, currentPosition))
+                
+                if self.locked:
+                    if Label.isDifferent(self.lastPoint, currentPosition):
+                        self.labels.pop(self.lockedLabelIndex)
+                        label = Label(self.lastPoint, currentPosition, self.lockedLabel.roadType, self.lockedLabel.roadIdx)
+                        self.labels.append(label)
+                        #self.labels.append(Label(self.lastPoint, currentPosition))
+                    else:
+                        return
+                else:
+                    pass
+                
+                    '''
+                    if Label.isDifferent(self.lastPoint, currentPosition):
+                        self.labels.append(Label(self.lastPoint, currentPosition))
+                    '''
+                    
             elif self.moving:
                 #print('release moving')
                 self.labels.pop(self.selectedIndex)
                 
                 label = None
                 if self.pivotPoint:
-                    label = Label(self.pivotPoint, currentPosition)
+                    label = Label(self.pivotPoint, currentPosition, self.selectedLabel.roadType, self.selectedLabel.roadIdx)
                 elif self.movingBasePoint:
                     shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
                     p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
                     p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
-                    label = Label(p1, p2, self.selectedLabel.roadIdx, self.selectedLabel.laneIdx)
+                    label = Label(p1, p2, self.selectedLabel.roadType, self.selectedLabel.roadIdx)
                     
                 if label:
                     self.labels.append(label)
@@ -195,6 +221,10 @@ class Image(QtCore.QObject):
         self.selectedIndex = -1
         self.pivotPoint = None
         self.movingBasePoint = None
+        
+        self.locked = False
+        self.lockedLabel = None
+        self.lockedLabelIndex = -1
         
         return 
     
@@ -219,6 +249,18 @@ class Image(QtCore.QObject):
         self.cloneImage = self.scaledPixmap.copy()
     '''
     
+    def lockForNewLabel(self, roadType, roadIdx):
+        self.locked = True
+        
+        for index, label in enumerate(self.labels):
+            if label.roadType == roadType:
+                if label.roadIdx == roadIdx:
+                    self.lockedLabel = label
+                    self.lockedLabelIndex = index
+                    break
+                
+        return self.lockedLabel
+        
     def ScaleImage(self, scaling = _SCALING_BASE):
         self.scalingRatio = round((scaling / self._SCALING_BASE), self._RND_NO)
         scaledWidth, scaledHeight = self.pixmap.width() * self.scalingRatio, self.pixmap.height() * self.scalingRatio

@@ -2,7 +2,7 @@
 
 class Shape():
     
-    _Tolerance = 4
+    _Tolerance = 6
         
     def __init__(self, p1, p2):
         self.p1 = p1

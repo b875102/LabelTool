@@ -20,7 +20,11 @@ class PointPosition():
         return self.x != '' and self.y != ''
     
     def toQPoint(self):
-        return QPoint(int(self.x), int(self.y))
+        if self.hasValue():
+            p = QPoint(int(self.x), int(self.y))
+        else:
+            p = QPoint()
+        return p
     
 class GeographicCoordinate():
     def __init__(self, latitude = '', longitude = ''):
