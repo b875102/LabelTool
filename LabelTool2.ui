@@ -28,7 +28,7 @@
            <x>0</x>
            <y>0</y>
            <width>674</width>
-           <height>425</height>
+           <height>419</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout">
@@ -227,7 +227,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>130</height>
+          <height>128</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
@@ -499,14 +499,28 @@
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="QWidget" name="layoutWidget">
-            <layout class="QVBoxLayout" name="verticalLayout_8">
+           <widget class="QWidget" name="">
+            <layout class="QVBoxLayout" name="verticalLayout_4">
              <item>
-              <widget class="QLabel" name="lblRoad">
-               <property name="text">
-                <string>Road</string>
-               </property>
-              </widget>
+              <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <item>
+                <widget class="QLabel" name="lblRoad">
+                 <property name="text">
+                  <string>Road</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="chkShowRoadId">
+                 <property name="text">
+                  <string>Show Road Id</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -542,14 +556,28 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="layoutWidget">
-            <layout class="QVBoxLayout" name="verticalLayout_9">
+           <widget class="QWidget" name="">
+            <layout class="QVBoxLayout" name="verticalLayout_8">
              <item>
-              <widget class="QLabel" name="lblLane">
-               <property name="text">
-                <string>Lane</string>
-               </property>
-              </widget>
+              <layout class="QHBoxLayout" name="horizontalLayout_5">
+               <item>
+                <widget class="QLabel" name="lblLane">
+                 <property name="text">
+                  <string>Lane</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="chkShowLaneId">
+                 <property name="text">
+                  <string>Show Lane Id</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_7">

@@ -1,24 +1,26 @@
-from PyQt5.QtGui import QPainterPath
+from PyQt5.QtGui import QPainterPath, QColor, QFont, QFontMetrics
 
 from enum import Enum
+from enum import IntEnum
 from Line import Line
 
 class LabelType(Enum):
     Line = 0
     #Rectangle = 1
     
-class RoadType(Enum):
-    Road = 0
-    Lane = 1
-
+class RoadType(IntEnum):
+    Road = 2 ** 0
+    Lane = 2 ** 1
+    
 class Label():
-
-    def __init__(self, p1, p2, roadType = RoadType.Road, roadIdx = None, labelType = LabelType.Line):
+    
+    def __init__(self, p1, p2, roadType = RoadType.Road, roadIdx = None, roadId = '', labelType = LabelType.Line):
         
         self.labelType = labelType
         
         self.roadType = roadType
         self.roadIdx = roadIdx
+        self.roadId = roadId
         
         self.shape = Line(p1, p2)
         
@@ -46,7 +48,14 @@ class Label():
     def isDifferent(p1, p2):
         return (pow(pow(p1.x() - p2.x(), 2) + pow(p1.y() - p2.y(), 2), 0.5) > 0)
         
-    def getPainterPath(self, scalingRatio):
+    def getPainterColor(self):
+        if self.roadType == RoadType.Road:
+            color = QColor(0, 204, 255)
+        else:
+            color = QColor(255, 0, 255)
+        return color
+        
+    def getPainterPath(self, scalingRatio, roadHintByte):
         diameter = 10
         radius = diameter / 2
         p1_o, p2_o = self.getPoints()
@@ -67,6 +76,23 @@ class Label():
   
         p1Fp(p1_s.x() - radius, p1_s.y() - radius, diameter, diameter)
         p2Fp(p2_s.x() - radius, p2_s.y() - radius, diameter, diameter)
+        
+        
+        
+        if roadHintByte & int(self.roadType):
+            
+            t = self.roadId
+            f = QFont("SansSerif", 14, QFont.Normal)
+            
+            metrics = QFontMetrics(f)
+            fontwidth, fontheight = metrics.width(t) / 2, metrics.height() / 2            
+            
+            x, y = self.shape.getCentralXY()
+            x = (x - fontwidth) * scalingRatio
+            y = (y - fontheight) * scalingRatio
+
+            painterPath.addText(x, y, f, t)
+        
         return painterPath
         
     

@@ -15,6 +15,12 @@ class Line(Shape):
         self.lineType = self.getLineType(self.p1, self.p2)
         self.ab = self.getAB(self.p1, self.p2)
 
+    def setPoints(self, p1, p2):
+        self.p1, self.p2 = p1, p2
+
+        self.lineType = self.getLineType(self.p1, self.p2)
+        self.ab = self.getAB(self.p1, self.p2)
+        
     def isSelected(self, pos):
         result = False
         
@@ -60,6 +66,17 @@ class Line(Shape):
             
             ab = np.linalg.pinv(x) @ y
         return ab
+    
+    def getCentralXY(self):
+        
+        maxX = max(self.p1.x(), self.p2.x())
+        minX = min(self.p1.x(), self.p2.x())
+        maxY = max(self.p1.y(), self.p2.y())
+        minY = min(self.p1.y(), self.p2.y())
+        
+        x = int(minX + ((maxX - minX) / 2))
+        y = int(minY + ((maxY - minY) / 2))
+        return x, y
 
 if __name__ == '__main__':
     

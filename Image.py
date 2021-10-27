@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 #from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QColor
 import copy
 #from LabelList import LabelList
 from Label import Label
@@ -35,6 +35,7 @@ class Image(QtCore.QObject):
         self.scalingRatio = 1
         self.labels = []
         #self.labelList = LabelList()
+        self.roadHintByte = 3
         
         self.cctvConfig = None
         self.ScaleImage()
@@ -133,38 +134,48 @@ class Image(QtCore.QObject):
             if self.drawing:
                 if self.lastPoint:
                     #print('mouse move drawing')
+                    
                     tmpLabels = copy.deepcopy(self.labels)
-                    tmpLabels.append(Label(self.lastPoint, currentPosition))
+                    
+                    if self.locked:
+                        popLabel = tmpLabels.pop(self.lockedLabelIndex)
+                        tmpLabels.append(Label(self.lastPoint, currentPosition, self.lockedLabel.roadType, self.lockedLabel.roadIdx, self.lockedLabel.roadId))
+                    else:
+                        tmpLabels.append(Label(self.lastPoint, currentPosition))
+                        
                     self.drawLine(tmpLabels)
             elif self.moving:
                 if self.selectedLabel:
                     #print('mouse move moving')
                     tmpLabels = copy.deepcopy(self.labels)
-                    tmpLabels.pop(self.selectedIndex)
+                    popLabel = tmpLabels.pop(self.selectedIndex)
                     
                     label = None
                     if self.pivotPoint:
-                        label = Label(self.pivotPoint, currentPosition)
+                        label = Label(self.pivotPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                         label.selectedEndpoint = currentPosition
                     elif self.movingBasePoint:
                         shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
                         p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
                         p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
-                        label = Label(p1, p2)
+                        label = Label(p1, p2, self.selectedLabel.roadType, self.selectedLabel.roadIdx, self.selectedLabel.roadId)
                         
                     if label:
                         label.selected = True
                         tmpLabels.append(label)
                     self.drawLine(tmpLabels)
         else:
-            #print('just mouse move')
-            for label in self.labels:
-                #label.isSelected(event.pos())
-                if label.isSelected(currentPosition):
-                    self._labelSelectedEvent.emit(label)
-                    break
-                
-            self.drawLine(self.labels)
+            
+            if not self.locked:
+            
+                #print('just mouse move')
+                for label in self.labels:
+                    #label.isSelected(event.pos())
+                    if label.isSelected(currentPosition):
+                        self._labelSelectedEvent.emit(label)
+                        break
+                    
+                self.drawLine(self.labels)
 
     def mouseReleaseEvent(self, event):
         #print('mouseReleaseEvent')
@@ -179,7 +190,7 @@ class Image(QtCore.QObject):
                 if self.locked:
                     if Label.isDifferent(self.lastPoint, currentPosition):
                         self.labels.pop(self.lockedLabelIndex)
-                        label = Label(self.lastPoint, currentPosition, self.lockedLabel.roadType, self.lockedLabel.roadIdx)
+                        label = Label(self.lastPoint, currentPosition, self.lockedLabel.roadType, self.lockedLabel.roadIdx, self.lockedLabel.roadId)
                         self.labels.append(label)
                         #self.labels.append(Label(self.lastPoint, currentPosition))
                     else:
@@ -198,12 +209,12 @@ class Image(QtCore.QObject):
                 
                 label = None
                 if self.pivotPoint:
-                    label = Label(self.pivotPoint, currentPosition, self.selectedLabel.roadType, self.selectedLabel.roadIdx)
+                    label = Label(self.pivotPoint, currentPosition, self.selectedLabel.roadType, self.selectedLabel.roadIdx, self.selectedLabel.roadId)
                 elif self.movingBasePoint:
                     shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
                     p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
                     p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
-                    label = Label(p1, p2, self.selectedLabel.roadType, self.selectedLabel.roadIdx)
+                    label = Label(p1, p2, self.selectedLabel.roadType, self.selectedLabel.roadIdx, self.selectedLabel.roadId)
                     
                 if label:
                     self.labels.append(label)
@@ -248,18 +259,31 @@ class Image(QtCore.QObject):
         self.scaledPixmap = self.pixmap.copy()
         self.cloneImage = self.scaledPixmap.copy()
     '''
-    
-    def lockForNewLabel(self, roadType, roadIdx):
-        self.locked = True
-        
+    def findLabel(self, roadType, roadIdx):
+        fidx = -1
+        flbl = None
         for index, label in enumerate(self.labels):
             if label.roadType == roadType:
                 if label.roadIdx == roadIdx:
-                    self.lockedLabel = label
-                    self.lockedLabelIndex = index
+                    fidx = index
+                    flbl = label
                     break
                 
+        return fidx, flbl         
+        
+    def lockForNewLabel(self, roadType, roadIdx):
+        self.locked = True
+        self.lockedLabelIndex, self.lockedLabel = self.findLabel(roadType, roadIdx)
         return self.lockedLabel
+    
+    def updateLabel(self, roadType, roadIdx, roadId, p1, p2):
+        updateLabelIndex, updateLabel = self.findLabel(roadType, roadIdx)
+        if updateLabelIndex > -1:
+            self.labels[updateLabelIndex].roadId = roadId
+            self.labels[updateLabelIndex].shape.setPoints(p1, p2)
+            #self.labels[updateLabelIndex].shape.p1 = p1
+            #self.labels[updateLabelIndex].shape.p2 = p2
+            self.drawLine(self.labels)
         
     def ScaleImage(self, scaling = _SCALING_BASE):
         self.scalingRatio = round((scaling / self._SCALING_BASE), self._RND_NO)
@@ -293,24 +317,39 @@ class Image(QtCore.QObject):
         self.cloneImage = self.scaledPixmap.copy()
         painter = QPainter(self.cloneImage)
         
+        pen = painter.pen()
+        brush = painter.brush()
+        
+        pen.setWidth(2)
+        pen.setStyle(Qt.SolidLine)
+        brush.setStyle(Qt.SolidPattern)
+        
+        '''
         redPen = QPen(Qt.red, 2, Qt.SolidLine)
         greenPen = QPen(Qt.green, 2, Qt.SolidLine)
         
         redBrush = QBrush(Qt.red, Qt.SolidPattern)
         greenBrush = QBrush(Qt.green, Qt.SolidPattern)
-        
+        '''
         
         for label in labels:
 
             
             if label.selected:
-                painter.setPen(redPen)
-                painter.setBrush(redBrush)
+                #painter.setPen(redPen)
+                #painter.setBrush(redBrush)
+                pen.setColor(Qt.red)
+                brush.setColor(Qt.red)
             else:
-                painter.setPen(greenPen)
-                painter.setBrush(greenBrush)                
-
-            painter.drawPath(label.getPainterPath(self.scalingRatio))
+                #painter.setPen(greenPen)
+                #painter.setBrush(greenBrush)                
+                pen.setColor(label.getPainterColor())
+                brush.setColor(label.getPainterColor())
+                
+            painter.setPen(pen)
+            painter.setBrush(brush)
+            
+            painter.drawPath(label.getPainterPath(self.scalingRatio, self.roadHintByte))
             
             '''
             lastPos, currentPos = label.shape.p1, label.shape.p2

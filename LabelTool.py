@@ -63,7 +63,9 @@ class LabelTool(QtWidgets.QMainWindow):
         self.lstFile.itemClicked.connect(self.FileList_Clicked)
         self.treeCCTVConfig.itemClicked.connect(self.TreeCCTVConfig_ItemClicked)
         self.treeIntersectionConfig.itemClicked.connect(self.TreeIntersectionConfig_ItemClicked)
-
+        self.chkShowRoadId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
+        self.chkShowLaneId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
+        
         #CCTV Config Widget
         self.__initialTableHeader()
         
@@ -85,6 +87,8 @@ class LabelTool(QtWidgets.QMainWindow):
         self.btnDeleteLane.clicked.connect(self.__DeleteLane)
         
         self.keepRoadIdxOfLanes = -1
+        
+        self.roadHintByte = 3
 
         #set attribute
         self.actionOpen_Video.setVisible(False)
@@ -95,7 +99,7 @@ class LabelTool(QtWidgets.QMainWindow):
         self.dwgLabelList.close()
         self.dwgCCTVConfig.close()
         
-        print('sizeHint', self.sizeHint())
+        #print('sizeHint', self.sizeHint())
         
         self.imagePath = ''
         #self.imagePath = 'data/counting_example_cam_5_1min.mp4_000000001.png'        
@@ -114,6 +118,10 @@ class LabelTool(QtWidgets.QMainWindow):
         #self.txtCCTV.setText(self.cctvConfig..textChanged
         
         self.init = False
+        
+        self.refreshRoadTable = False
+        self.refreshLaneTable = False
+        
     def show(self):
         super().show()
         
@@ -152,12 +160,12 @@ class LabelTool(QtWidgets.QMainWindow):
     def OpenImages_Click(self):
         #print('OpenImages_Click')
         
-        ''''''
+        '''
         self.openFileDialog.txtIllustration.setText('D:/_Course/Project/LabelTool/data/illustration.png')
         self.openFileDialog.txtCCTVImage.setText('D:/_Course/Project/LabelTool/data/192.168.111.26_園區二路與研發二路球機(12)_道路淨空.png')
         self.openFileDialog.txtIntersectionConfiguration.setText('D:/_Course/Project/LabelTool/data/Intersection_configuration.xml')
         self.openFileDialog.txtCCTVConfiguration.setText('D:/_Course/Project/LabelTool/data/cctv_configuration.xml')
-        
+        '''
         
         if self.openFileDialog.exec() == QtWidgets.QDialog.Accepted:
             if self.openFileDialog.checkResult():
@@ -210,6 +218,24 @@ class LabelTool(QtWidgets.QMainWindow):
     def TreeIntersectionConfig_ItemClicked(self, item, column):
         print('TreeIntersectionConfig', column, item.text(column))
     
+    def ChkShowRoadId_StateChanged(self):
+        
+        roadHint = 0
+        laneHint = 0
+        
+        if self.chkShowRoadId.isChecked():
+            roadHint = int(RoadType.Road)
+            
+        if self.chkShowLaneId.isChecked():
+            laneHint = int(RoadType.Lane)
+            
+        self.roadHintByte = roadHint | laneHint
+        
+        if self.image:
+            self.image.roadHintByte = self.roadHintByte
+            self.SetSilder()
+            
+    
     def LoadImages(self, pngfiles):
         self.lstLabel.clear()
         self.lstFile.clear()
@@ -252,7 +278,8 @@ class LabelTool(QtWidgets.QMainWindow):
         self.image = Image(self.lblImage, imagePath, True)
         self.image._mouseMoveEvent.connect(self.Image_MouseMove)
         self.image._labelChangedEvent.connect(self.Label_Changed)
-        self.image._labelSelectedEvent.connect(self.Label_Selected) 
+        self.image._labelSelectedEvent.connect(self.Label_Selected)
+        self.image.roadHintByte = self.roadHintByte
         self.SetSilder()
     
     def OpenIllustrationImage(self, imagePath):
@@ -271,6 +298,10 @@ class LabelTool(QtWidgets.QMainWindow):
         
     @QtCore.pyqtSlot(list)
     def Label_Changed(self, labels):
+        
+        self.refreshRoadTable = True
+        self.refreshLaneTable = True        
+        
         self.lstLabel.clear()
         for label in labels:
             self.lstLabel.addItem(label.toString())
@@ -308,6 +339,9 @@ class LabelTool(QtWidgets.QMainWindow):
                     self.tblLane.item(laneIdx, 4).setText(str(label.shape.p2.y()))
                 
         #self.__refreshCCTVConfigAndLabel(self.cctvConfig)
+        
+        self.refreshRoadTable = False
+        self.refreshLaneTable = False        
         
     @QtCore.pyqtSlot(Label)
     def Label_Selected(self, label):
@@ -369,13 +403,13 @@ class LabelTool(QtWidgets.QMainWindow):
             p1, p2 = road.position1, road.position2
             
             #if p1.hasValue() and p2.hasValue:
-            labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx))
+            labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx, road.road_id))
                 
             for laneIdx, lane in enumerate(road.lanes):
                 p1, p2 = lane.position1, lane.position2
                 
                 #if p1.hasValue() and p2.hasValue:
-                labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Lane, (roadIdx, laneIdx)))
+                labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Lane, (roadIdx, laneIdx), lane.lane_id))
         return labels
     
     def __initialTableHeader(self):
@@ -397,6 +431,9 @@ class LabelTool(QtWidgets.QMainWindow):
         self.tblLane.hideColumn(6)
         
     def __ShowConfig(self, cctvConfig):
+        
+        self.refreshRoadTable = True
+        self.refreshLaneTable = True
         
         self.tblReferencePoints.setRowCount(0)
         self.tblRoad.setRowCount(0)
@@ -428,6 +465,9 @@ class LabelTool(QtWidgets.QMainWindow):
             roadList.append(values)
         self.__AddTableRow(self.tblRoad, roadList)
         
+        self.refreshRoadTable = False
+        self.refreshLaneTable = False        
+        
     def __AddTableRow(self, tbl, contents):
         rowNum = len(contents)
         if rowNum > 0:
@@ -445,10 +485,47 @@ class LabelTool(QtWidgets.QMainWindow):
         self.__tblItemChanged(self.tblReferencePoints, item)
 
     def __tblRoad_ItemChanged(self, item):
+        #print('__tblRoad_ItemChanged')
         self.__tblItemChanged(self.tblRoad, item)
         
+        if not self.refreshRoadTable:
+            
+            row = item.row()
+            column = item.column()
+                
+            self.__RefreshRoads()
+            
+            if column in [0, 5, 6, 7, 8]:
+
+                roadType = RoadType.Road
+                roadIdx = row
+                roadId = self.cctvConfig.virtualGate.roads[roadIdx].road_id
+                p1 = self.cctvConfig.virtualGate.roads[roadIdx].position1.toQPoint()
+                p2 = self.cctvConfig.virtualGate.roads[roadIdx].position2.toQPoint()
+                
+                self.image.updateLabel(roadType, roadIdx, roadId, p1, p2)
+
     def __tblLane_ItemChanged(self, item):
+        #print('__tblLane_ItemChanged')
         self.__tblItemChanged(self.tblLane, item)
+        
+        if not self.refreshLaneTable:
+            
+            row = item.row()
+            column = item.column()
+
+            if self.keepRoadIdxOfLanes > -1:
+                self.__RefreshLanes(self.keepRoadIdxOfLanes)
+                
+                if column in [0, 1, 2, 3, 4]:
+    
+                    roadType = RoadType.Lane
+                    roadIdx = self.keepRoadIdxOfLanes
+                    roadId = self.cctvConfig.virtualGate.roads[roadIdx].lanes[row].lane_id
+                    p1 = self.cctvConfig.virtualGate.roads[roadIdx].lanes[row].position1.toQPoint()
+                    p2 = self.cctvConfig.virtualGate.roads[roadIdx].lanes[row].position2.toQPoint()
+                    
+                    self.image.updateLabel(roadType, (roadIdx, row), roadId, p1, p2)
         
     def __tblItemChanged(self, tbl, item):
         tbl.resizeRowsToContents()
@@ -460,6 +537,8 @@ class LabelTool(QtWidgets.QMainWindow):
         currentRow = self.tblRoad.currentRow()
         
         if currentRow >= 0:
+            
+            self.refreshLaneTable = True
             
             if self.keepRoadIdxOfLanes > -1:
                 self.__RefreshLanes(self.keepRoadIdxOfLanes)
@@ -479,6 +558,8 @@ class LabelTool(QtWidgets.QMainWindow):
                 laneList.append(values)
                 
             self.__AddTableRow(self.tblLane, laneList)
+            
+            self.refreshLaneTable = False
         else:
             self.keepRoadIdxOfLanes = -1
             
