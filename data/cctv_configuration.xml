@@ -28,8 +28,8 @@
     </RoadInformation>
     <Virtual_gate>
         <Road>
-            <road_id>1</road_id>
-            <link_id>1</link_id>
+            <road_id>R1</road_id>
+            <link_id>N1</link_id>
             <name>園區二路</name>
             <direction>Out</direction>
             <section>North</section>
@@ -41,7 +41,7 @@
             </position>
             <lanes>
                 <lane>
-                    <lane_id>1</lane_id>
+                    <lane_id>L1</lane_id>
                     <position>
                         <x1>595</x1>
                         <y1>578</y1>
@@ -50,7 +50,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>2</lane_id>
+                    <lane_id>L2</lane_id>
                     <position>
                         <x1>835</x1>
                         <y1>458</y1>
@@ -59,7 +59,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>3</lane_id>
+                    <lane_id>L3</lane_id>
                     <position>
                         <x1>357</x1>
                         <y1>495</y1>
@@ -70,8 +70,8 @@
             </lanes>
         </Road>
         <Road>
-            <road_id>2</road_id>
-            <link_id>2</link_id>
+            <road_id>R2</road_id>
+            <link_id>N2</link_id>
             <name>研發二路</name>
             <section>East</section>
             <direction>In</direction>
@@ -83,8 +83,8 @@
             </position>
         </Road>
         <Road>
-            <road_id>3</road_id>
-            <link_id>3</link_id>
+            <road_id>R3</road_id>
+            <link_id>N3</link_id>
             <name>研發二路</name>
             <section>East</section>
             <direction>Out</direction>
@@ -96,8 +96,8 @@
             </position>
         </Road>
         <Road>
-            <road_id>4</road_id>
-            <link_id>4</link_id>
+            <road_id>R4</road_id>
+            <link_id>N4</link_id>
             <name>園區二路</name>
             <direction>In</direction>
             <section>South</section>
@@ -109,7 +109,7 @@
             </position>
             <lanes>
                 <lane>
-                    <lane_id>1</lane_id>
+                    <lane_id>L1</lane_id>
                     <position>
                         <x1>682</x1>
                         <y1>170</y1>
@@ -118,7 +118,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>2</lane_id>
+                    <lane_id>L2</lane_id>
                     <position>
                         <x1>578</x1>
                         <y1>178</y1>
@@ -127,7 +127,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>3</lane_id>
+                    <lane_id>L3</lane_id>
                     <position>
                         <x1>486</x1>
                         <y1>186</y1>
@@ -138,8 +138,8 @@
             </lanes>
         </Road>
         <Road>
-            <road_id>5</road_id>
-            <link_id>5</link_id>
+            <road_id>R5</road_id>
+            <link_id>N5</link_id>
             <name>園區二路</name>
             <direction>Out</direction>
             <section>South</section>
@@ -151,7 +151,7 @@
             </position>
             <lanes>
                 <lane>
-                    <lane_id>1</lane_id>
+                    <lane_id>L1</lane_id>
                     <position>
                         <x1>744</x1>
                         <y1>169</y1>
@@ -160,7 +160,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>2</lane_id>
+                    <lane_id>L2</lane_id>
                     <position>
                         <x1>836</x1>
                         <y1>160</y1>
@@ -169,7 +169,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>3</lane_id>
+                    <lane_id>L3</lane_id>
                     <position>
                         <x1>922</x1>
                         <y1>149</y1>
@@ -180,8 +180,8 @@
             </lanes>
         </Road>
         <Road>
-            <road_id>6</road_id>
-            <link_id>6</link_id>
+            <road_id>R6</road_id>
+            <link_id>N6</link_id>
             <name>園區二路</name>
             <direction>In</direction>
             <section>North</section>
@@ -193,7 +193,7 @@
             </position>
             <lanes>
                 <lane>
-                    <lane_id>1</lane_id>
+                    <lane_id>L1</lane_id>
                     <position>
                         <x1>992</x1>
                         <y1>505</y1>
@@ -202,7 +202,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>2</lane_id>
+                    <lane_id>L2</lane_id>
                     <position>
                         <x1>1227</x1>
                         <y1>483</y1>
@@ -211,7 +211,7 @@
                     </position>
                 </lane>
                 <lane>
-                    <lane_id>3</lane_id>
+                    <lane_id>L3</lane_id>
                     <position>
                         <x1>1471</x1>
                         <y1>458</y1>

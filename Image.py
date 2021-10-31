@@ -6,6 +6,7 @@ import copy
 #from LabelList import LabelList
 from Label import Label
 from Label import RoadType
+from Label import RoadFlag
 
 class Image(QtCore.QObject):
     
@@ -35,7 +36,7 @@ class Image(QtCore.QObject):
         self.scalingRatio = 1
         self.labels = []
         #self.labelList = LabelList()
-        self.roadHintByte = 3
+        self.roadFlagByte = RoadFlag.Road | RoadFlag.Link | RoadFlag.Lane
         
         self.cctvConfig = None
         self.ScaleImage()
@@ -316,7 +317,8 @@ class Image(QtCore.QObject):
         
         self.cloneImage = self.scaledPixmap.copy()
         painter = QPainter(self.cloneImage)
-        
+        #painter.setRenderHint(QPainter.Antialiasing)
+                              
         pen = painter.pen()
         brush = painter.brush()
         
@@ -349,7 +351,7 @@ class Image(QtCore.QObject):
             painter.setPen(pen)
             painter.setBrush(brush)
             
-            painter.drawPath(label.getPainterPath(self.scalingRatio, self.roadHintByte))
+            painter.drawPath(label.getPainterPath(self.scalingRatio, self.roadFlagByte))
             
             '''
             lastPos, currentPos = label.shape.p1, label.shape.p2

@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from Label import Label
 from Label import RoadType
+from Label import RoadFlag
 
 from Image import Image
 from FileHelper import FileHelper
@@ -64,6 +65,7 @@ class LabelTool(QtWidgets.QMainWindow):
         self.treeCCTVConfig.itemClicked.connect(self.TreeCCTVConfig_ItemClicked)
         self.treeIntersectionConfig.itemClicked.connect(self.TreeIntersectionConfig_ItemClicked)
         self.chkShowRoadId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
+        self.chkShowLinkId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
         self.chkShowLaneId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
         
         #CCTV Config Widget
@@ -88,7 +90,7 @@ class LabelTool(QtWidgets.QMainWindow):
         
         self.keepRoadIdxOfLanes = -1
         
-        self.roadHintByte = 3
+        self.roadFlagByte = RoadFlag.Road | RoadFlag.Link | RoadFlag.Lane
 
         #set attribute
         self.actionOpen_Video.setVisible(False)
@@ -220,19 +222,19 @@ class LabelTool(QtWidgets.QMainWindow):
     
     def ChkShowRoadId_StateChanged(self):
         
-        roadHint = 0
-        laneHint = 0
-        
+        self.roadFlagByte = RoadFlag.NoFlag
+
         if self.chkShowRoadId.isChecked():
-            roadHint = int(RoadType.Road)
+            self.roadFlagByte = self.roadFlagByte | RoadFlag.Road
+          
+        if self.chkShowLinkId.isChecked():
+            self.roadFlagByte = self.roadFlagByte | RoadFlag.Link
             
         if self.chkShowLaneId.isChecked():
-            laneHint = int(RoadType.Lane)
-            
-        self.roadHintByte = roadHint | laneHint
+            self.roadFlagByte = self.roadFlagByte | RoadFlag.Lane
         
         if self.image:
-            self.image.roadHintByte = self.roadHintByte
+            self.image.roadFlagByte = self.roadFlagByte
             self.SetSilder()
             
     
@@ -279,7 +281,7 @@ class LabelTool(QtWidgets.QMainWindow):
         self.image._mouseMoveEvent.connect(self.Image_MouseMove)
         self.image._labelChangedEvent.connect(self.Label_Changed)
         self.image._labelSelectedEvent.connect(self.Label_Selected)
-        self.image.roadHintByte = self.roadHintByte
+        self.image.roadFlagByte = self.roadFlagByte
         self.SetSilder()
     
     def OpenIllustrationImage(self, imagePath):
@@ -403,7 +405,7 @@ class LabelTool(QtWidgets.QMainWindow):
             p1, p2 = road.position1, road.position2
             
             #if p1.hasValue() and p2.hasValue:
-            labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx, road.road_id))
+            labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx, (road.road_id, road.link_id)))
                 
             for laneIdx, lane in enumerate(road.lanes):
                 p1, p2 = lane.position1, lane.position2
@@ -495,11 +497,11 @@ class LabelTool(QtWidgets.QMainWindow):
                 
             self.__RefreshRoads()
             
-            if column in [0, 5, 6, 7, 8]:
+            if column in [0, 1, 5, 6, 7, 8]:
 
                 roadType = RoadType.Road
                 roadIdx = row
-                roadId = self.cctvConfig.virtualGate.roads[roadIdx].road_id
+                roadId = (self.cctvConfig.virtualGate.roads[roadIdx].road_id, self.cctvConfig.virtualGate.roads[roadIdx].link_id)
                 p1 = self.cctvConfig.virtualGate.roads[roadIdx].position1.toQPoint()
                 p2 = self.cctvConfig.virtualGate.roads[roadIdx].position2.toQPoint()
                 

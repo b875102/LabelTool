@@ -28,7 +28,7 @@
            <x>0</x>
            <y>0</y>
            <width>674</width>
-           <height>419</height>
+           <height>415</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout">
@@ -227,7 +227,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>128</height>
+          <height>126</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
@@ -514,6 +514,16 @@
                 <widget class="QCheckBox" name="chkShowRoadId">
                  <property name="text">
                   <string>Show Road Id</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="chkShowLinkId">
+                 <property name="text">
+                  <string>Show Link Id</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>

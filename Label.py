@@ -2,15 +2,22 @@ from PyQt5.QtGui import QPainterPath, QColor, QFont, QFontMetrics
 
 from enum import Enum
 from enum import IntEnum
+from enum import IntFlag
 from Line import Line
 
 class LabelType(Enum):
     Line = 0
     #Rectangle = 1
     
-class RoadType(IntEnum):
-    Road = 2 ** 0
-    Lane = 2 ** 1
+class RoadType(Enum):
+    Road = 0
+    Lane = 1
+
+class RoadFlag(IntFlag):
+    NoFlag = 0
+    Road = 1
+    Link = 2
+    Lane = 4
     
 class Label():
     
@@ -50,12 +57,18 @@ class Label():
         
     def getPainterColor(self):
         if self.roadType == RoadType.Road:
-            color = QColor(0, 204, 255)
+            #color = QColor(0, 204, 255)
+            #color = QColor(0, 112, 192)
+            #color = QColor(47, 85, 151)
+            #color = QColor(0, 176, 80)
+            #color = QColor(112, 48, 160)
+            color = QColor(0, 0, 255)
         else:
-            color = QColor(255, 0, 255)
+            #color = QColor(255, 0, 255)
+            color = QColor(237, 125, 49)
         return color
         
-    def getPainterPath(self, scalingRatio, roadHintByte):
+    def getPainterPath(self, scalingRatio, roadFlagByte):
         diameter = 10
         radius = diameter / 2
         p1_o, p2_o = self.getPoints()
@@ -79,10 +92,25 @@ class Label():
         
         
         
-        if roadHintByte & int(self.roadType):
+        txtList = []
+        
+        if self.roadType == RoadType.Road:
+            (roadId, linkId) = self.roadId
+            if roadFlagByte & RoadFlag.Road:
+                txtList.append(roadId)
+            if roadFlagByte & RoadFlag.Link:
+                txtList.append(linkId)                
+        else:
+            if roadFlagByte & RoadFlag.Lane:
+                txtList.append(self.roadId)
+
+        
+        
+        #if roadHintByte & int(self.roadType):
+        if len(txtList) > 0:
             
-            t = self.roadId
-            f = QFont("SansSerif", 14, QFont.Normal)
+            t = '_'.join(txtList)
+            f = QFont("SansSerif", 12, QFont.Normal)
             
             metrics = QFontMetrics(f)
             fontwidth, fontheight = metrics.width(t) / 2, metrics.height() / 2            
