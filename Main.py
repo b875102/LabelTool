@@ -45,9 +45,15 @@ def loadForDev():
 
     fileDict['Illustration'] = os.path.join(folder, 'illustration.png')
     fileDict['CCTVImage'] = os.path.join(folder, '192.168.111.26_園區二路與研發二路球機(12)_道路淨空.png')
+    
+    '''
     fileDict['IntersectionConfiguration'] = os.path.join(folder, 'Intersection_configuration.xml')
     fileDict['CCTVConfiguration'] = os.path.join(folder, 'cctv_configuration.xml')
+    '''
 
+    fileDict['IntersectionConfiguration'] = os.path.join(folder, 'Intersection_configuration_IF-065.xml')
+    fileDict['CCTVConfiguration'] = os.path.join(folder, 'cctv_configuration_IF-065-1.xml')
+    
     loadLabelTool(fileDict)
 
 if __name__ == "__main__":

@@ -95,12 +95,13 @@ class Label():
         txtList = []
         
         if self.roadType == RoadType.Road:
-            (roadId, linkId) = self.roadId
-            if roadFlagByte & RoadFlag.Road:
-                txtList.append(roadId)
-            if roadFlagByte & RoadFlag.Link:
-                txtList.append(linkId)                
-        else:
+            if len(self.roadId) == 2:
+                (roadId, linkId) = self.roadId
+                if roadFlagByte & RoadFlag.Road:
+                    txtList.append(roadId)
+                if roadFlagByte & RoadFlag.Link:
+                    txtList.append(linkId)                
+        elif self.roadType == RoadType.Lane:
             if roadFlagByte & RoadFlag.Lane:
                 txtList.append(self.roadId)
 

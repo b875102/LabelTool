@@ -8,6 +8,7 @@ from Label import RoadFlag
 
 from Image import Image
 from FileHelper import FileHelper
+#from FileHelper import OptionType
 from OpenFileDialog import OpenFileDialog
 from CCTVConfiguration import CCTVConfiguration
 from IntersectionConfiguration import IntersectionConfiguration
@@ -27,8 +28,11 @@ class LabelTool(QtWidgets.QMainWindow):
     _SCALING_MIN = 10
     
     _TABLE_COLUMNS_REFERENCE_POINTS = 4 + 1
-    _TABLE_COLUMNS_ROAD = 9 + 1
-    _TABLE_COLUMNS_LANE = 5 + 2
+    #_TABLE_COLUMNS_ROAD = 9 + 1
+    #_TABLE_COLUMNS_LANE = 5 + 2
+    
+    _TABLE_COLUMNS_ROAD = 7 + 1
+    _TABLE_COLUMNS_LANE = 9 + 2
     
     _DEFAULT_VALUE_CELL = '0'
     
@@ -67,6 +71,10 @@ class LabelTool(QtWidgets.QMainWindow):
         self.chkShowRoadId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
         self.chkShowLinkId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
         self.chkShowLaneId.stateChanged.connect(self.ChkShowRoadId_StateChanged)
+        
+        self.btnSave1.clicked.connect(self.__saveCCTVConfig)
+        self.btnSave2.clicked.connect(self.__saveCCTVConfig)
+        
         
         #CCTV Config Widget
         self.__initialTableHeader()
@@ -123,6 +131,9 @@ class LabelTool(QtWidgets.QMainWindow):
         
         self.refreshRoadTable = False
         self.refreshLaneTable = False
+        
+    def __del__(self):
+        print('called destructor')
         
     def show(self):
         super().show()
@@ -319,10 +330,16 @@ class LabelTool(QtWidgets.QMainWindow):
                 self.cctvConfig.virtualGate.roads[roadIdx].position2.x = str(label.shape.p2.x())
                 self.cctvConfig.virtualGate.roads[roadIdx].position2.y = str(label.shape.p2.y())
                 
+                '''
                 self.tblRoad.item(roadIdx, 5).setText(str(label.shape.p1.x()))
                 self.tblRoad.item(roadIdx, 6).setText(str(label.shape.p1.y()))
                 self.tblRoad.item(roadIdx, 7).setText(str(label.shape.p2.x()))
                 self.tblRoad.item(roadIdx, 8).setText(str(label.shape.p2.y()))
+                '''
+                self.tblRoad.item(roadIdx, 3).setText(str(label.shape.p1.x()))
+                self.tblRoad.item(roadIdx, 4).setText(str(label.shape.p1.y()))
+                self.tblRoad.item(roadIdx, 5).setText(str(label.shape.p2.x()))
+                self.tblRoad.item(roadIdx, 6).setText(str(label.shape.p2.y()))
                 
             elif label.roadType == RoadType.Lane:
                 
@@ -334,12 +351,18 @@ class LabelTool(QtWidgets.QMainWindow):
                 self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position2.y = str(label.shape.p2.y())   
                 
                 if self.keepRoadIdxOfLanes == roadIdx:
-
+                    
+                    '''
                     self.tblLane.item(laneIdx, 1).setText(str(label.shape.p1.x()))
                     self.tblLane.item(laneIdx, 2).setText(str(label.shape.p1.y()))
                     self.tblLane.item(laneIdx, 3).setText(str(label.shape.p2.x()))
                     self.tblLane.item(laneIdx, 4).setText(str(label.shape.p2.y()))
-                
+                    '''
+                    self.tblLane.item(laneIdx, 5).setText(str(label.shape.p1.x()))
+                    self.tblLane.item(laneIdx, 6).setText(str(label.shape.p1.y()))
+                    self.tblLane.item(laneIdx, 7).setText(str(label.shape.p2.x()))
+                    self.tblLane.item(laneIdx, 8).setText(str(label.shape.p2.y()))                    
+                    
         #self.__refreshCCTVConfigAndLabel(self.cctvConfig)
         
         self.refreshRoadTable = False
@@ -421,16 +444,23 @@ class LabelTool(QtWidgets.QMainWindow):
         self.tblReferencePoints.setHorizontalHeaderLabels(header)
         self.tblReferencePoints.hideColumn(4)
         
-        header = ['road_id', 'link_id', 'name', 'direction', 'section', 'x1', 'y1', 'x2', 'y2', 'roadIdx']
+        #header = ['road_id', 'link_id', 'name', 'direction', 'section', 'x1', 'y1', 'x2', 'y2', 'roadIdx']
+        header = ['road_id', 'link_id', 'direction', 'x1', 'y1', 'x2', 'y2', 'roadIdx']
         self.tblRoad.setColumnCount(self._TABLE_COLUMNS_ROAD)
         self.tblRoad.setHorizontalHeaderLabels(header)
-        self.tblRoad.hideColumn(9)
         
-        header = ['lane_id', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
+        #self.tblRoad.hideColumn(9)
+        #self.tblRoad.hideColumn(7)
+        
+        #header = ['lane_id', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
+        header = ['lane_id', 'Straight', 'Right Turn', 'Left Turn', 'U Turn', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
         self.tblLane.setColumnCount(self._TABLE_COLUMNS_LANE)
         self.tblLane.setHorizontalHeaderLabels(header)
-        self.tblLane.hideColumn(5)
-        self.tblLane.hideColumn(6)
+        
+        #self.tblLane.hideColumn(5)
+        #self.tblLane.hideColumn(6)
+        #self.tblLane.hideColumn(9)
+        #self.tblLane.hideColumn(10)        
         
     def __ShowConfig(self, cctvConfig):
         
@@ -497,8 +527,8 @@ class LabelTool(QtWidgets.QMainWindow):
                 
             self.__RefreshRoads()
             
-            if column in [0, 1, 5, 6, 7, 8]:
-
+            #if column in [0, 1, 5, 6, 7, 8]:
+            if column in [0, 1, 3, 4, 5, 6]:
                 roadType = RoadType.Road
                 roadIdx = row
                 roadId = (self.cctvConfig.virtualGate.roads[roadIdx].road_id, self.cctvConfig.virtualGate.roads[roadIdx].link_id)
@@ -519,8 +549,8 @@ class LabelTool(QtWidgets.QMainWindow):
             if self.keepRoadIdxOfLanes > -1:
                 self.__RefreshLanes(self.keepRoadIdxOfLanes)
                 
-                if column in [0, 1, 2, 3, 4]:
-    
+                #if column in [0, 1, 2, 3, 4]:
+                if column in [0, 5, 6, 7, 8]:
                     roadType = RoadType.Lane
                     roadIdx = self.keepRoadIdxOfLanes
                     roadId = self.cctvConfig.virtualGate.roads[roadIdx].lanes[row].lane_id
@@ -683,6 +713,8 @@ class LabelTool(QtWidgets.QMainWindow):
         for idx in range(rowCount):
             
             cctvRoad = CCTVRoad(None)
+            
+            '''
             cctvRoad.road_id = self.tblRoad.item(idx, 0).text()
             cctvRoad.link_id = self.tblRoad.item(idx, 1).text()
             cctvRoad.name = self.tblRoad.item(idx, 2).text()
@@ -695,6 +727,18 @@ class LabelTool(QtWidgets.QMainWindow):
             cctvRoad.position2.y = self.tblRoad.item(idx, 8).text()
             
             cctvRoad.lanes = copy.deepcopy(keepRoads[int(self.tblRoad.item(idx, 9).text())].lanes)
+            '''
+            
+            cctvRoad.road_id = self.tblRoad.item(idx, 0).text()
+            cctvRoad.link_id = self.tblRoad.item(idx, 1).text()
+            cctvRoad.direction = self.tblRoad.item(idx, 2).text()
+            
+            cctvRoad.position1.x = self.tblRoad.item(idx, 3).text()
+            cctvRoad.position1.y = self.tblRoad.item(idx, 4).text()
+            cctvRoad.position2.x = self.tblRoad.item(idx, 5).text()
+            cctvRoad.position2.y = self.tblRoad.item(idx, 6).text()
+            
+            cctvRoad.lanes = copy.deepcopy(keepRoads[int(self.tblRoad.item(idx, 7).text())].lanes)            
             
             self.cctvConfig.virtualGate.roads.append(cctvRoad)
         
@@ -708,15 +752,28 @@ class LabelTool(QtWidgets.QMainWindow):
             for idx in range(rowCount):
                 
                 cctvLane = CCTVLane(None)
+                
+                '''
                 cctvLane.lane_id = self.tblLane.item(idx, 0).text()
                 cctvLane.position1.x = self.tblLane.item(idx, 1).text()
                 cctvLane.position1.y = self.tblLane.item(idx, 2).text()
                 cctvLane.position2.x = self.tblLane.item(idx, 3).text()
                 cctvLane.position2.y = self.tblLane.item(idx, 4).text()
+                '''
+                
+                cctvLane.lane_id = self.tblLane.item(idx, 0).text()
+                cctvLane.straight = self.tblLane.item(idx, 1).text()
+                cctvLane.rightTurn = self.tblLane.item(idx, 2).text()
+                cctvLane.leftTurn = self.tblLane.item(idx, 3).text()
+                cctvLane.uTurn = self.tblLane.item(idx, 4).text()
+                cctvLane.position1.x = self.tblLane.item(idx, 5).text()
+                cctvLane.position1.y = self.tblLane.item(idx, 6).text()
+                cctvLane.position2.x = self.tblLane.item(idx, 7).text()
+                cctvLane.position2.y = self.tblLane.item(idx, 8).text()
                 
                 self.cctvConfig.virtualGate.roads[roadIdx].lanes.append(cctvLane)      
                 
-    def GetResult(self):
+    def __getResult(self):
 
         if self.keepRoadIdxOfLanes > -1:
             self.__RefreshLanes(self.keepRoadIdxOfLanes)
@@ -727,3 +784,5 @@ class LabelTool(QtWidgets.QMainWindow):
         
         return self.cctvConfig
               
+    def __saveCCTVConfig(self):
+        self.cctvConfig.save()

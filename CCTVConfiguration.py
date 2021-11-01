@@ -1,7 +1,13 @@
+import os
 import xml.etree.ElementTree as ElementTree
+from xml.dom import minidom
+
 #from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QTreeWidgetItem
 from PyQt5.QtCore import QPoint
+
+from FileHelper import FileHelper
+from FileHelper import OptionType
 
 def safeNodeText(node):
     txt = ''
@@ -51,7 +57,7 @@ class Header():
     def __init__(self, header):
         
         self.cctv = ''
-        self.name = ''
+        #self.name = ''
         self.version = ''
         self.date = ''
         self.intersection_id = ''
@@ -65,7 +71,7 @@ class Header():
         
         if header:
             self.cctv = safeNodeText(header.find('cctv'))
-            self.name = safeNodeText(header.find('name'))
+            #self.name = safeNodeText(header.find('name'))
             self.version = safeNodeText(header.find('version'))
             self.date = safeNodeText(header.find('date'))
             self.intersection_id = safeNodeText(header.find('intersection_id'))
@@ -104,9 +110,10 @@ class Header():
         
     def toXmlString(self):
         
+        #'<name>' + self.name + '</name>' + \
+            
         xmlStr = '<header>' + \
                     '<cctv>' + self.cctv + '</cctv>' + \
-                    '<name>' + self.name + '</name>' + \
                     '<version>' + self.version + '</version>' + \
                     '<date>' + self.date + '</date>' + \
                     '<intersection_id>' + self.intersection_id + '</intersection_id>' + \
@@ -134,10 +141,10 @@ class RoadInfo():
                 
     def showInTree(self, root):
         
-        road_Info = QTreeWidgetItem(root, ['RoadInformation'])
+        road_Info = QTreeWidgetItem(root, ['road_information'])
         ref_point = QTreeWidgetItem(road_Info, ['Reference_points'])
         
-        self.treeItems['RoadInformation'] = road_Info
+        self.treeItems['road_information'] = road_Info
         self.treeItems['Reference_points'] = ref_point
         
         for idx, reference_point in enumerate(self.reference_points):
@@ -156,7 +163,7 @@ class RoadInfo():
         
         if len(self.reference_points) > 0:
             
-            xmlStr = '<RoadInformation>' + \
+            xmlStr = '<road_information>' + \
                         '<Reference_points>'
                         
             for ref_point in self.reference_points:
@@ -169,7 +176,7 @@ class RoadInfo():
                             '</point>'
                         
             xmlStr += '</Reference_points>' + \
-                    '</RoadInformation>'
+                    '</road_information>'
 
         return xmlStr   
         
@@ -183,22 +190,22 @@ class VirtualGate():
     def extract(self, virtualGate):
 
         if virtualGate:
-            for road in virtualGate.findall('Road'):
+            for road in virtualGate.findall('road'):
                 self.roads.append(Road(road))
                 
     def showInTree(self, root):
         
-        virtual_gate = QTreeWidgetItem(root, ['Virtual_gate'])
+        virtual_gate = QTreeWidgetItem(root, ['virtual_gate'])
         
         for roadIdx, road in enumerate(self.roads):
-            itemRoad = QTreeWidgetItem(virtual_gate, ['Road'])
+            itemRoad = QTreeWidgetItem(virtual_gate, ['road'])
             
             self.treeItems['Road_{0}'.format(roadIdx)] = itemRoad
             self.treeItems['Road_{0}_road_id'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['road_id', road.road_id])
             self.treeItems['Road_{0}_link_id'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['link_id', road.link_id])
-            self.treeItems['Road_{0}_name'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['name', road.name])
+            #self.treeItems['Road_{0}_name'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['name', road.name])
             self.treeItems['Road_{0}_direction'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['direction', road.direction])
-            self.treeItems['Road_{0}_section'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['section', road.section])
+            #self.treeItems['Road_{0}_section'.format(roadIdx)] = QTreeWidgetItem(itemRoad, ['section', road.section])
             
             itemPosition = QTreeWidgetItem(itemRoad, ['position'])
             
@@ -216,6 +223,7 @@ class VirtualGate():
                 
                 self.treeItems['Road_{0}_itemLanes_lane_{1}'.format(roadIdx, laneIdx)] = itemLane
                 self.treeItems['Road_{0}_itemLanes_lane_{1}_lane_id'.format(roadIdx, laneIdx)] = QTreeWidgetItem(itemLane, ['lane_id', lane.lane_id])
+                self.treeItems['Road_{0}_itemLanes_lane_{1}_forward_direction'.format(roadIdx, laneIdx)] = QTreeWidgetItem(itemLane, ['forward_direction', lane.forward_direction])
                 
                 itemPosition = QTreeWidgetItem(itemLane, ['position'])
                 
@@ -227,11 +235,12 @@ class VirtualGate():
                 
     def toXmlString(self):
         
-        xmlStr = '<Virtual_gate>'
+        xmlStr = '<virtual_gate>'
         
         for road in self.roads:
             
-            xmlStr += '<Road>' + \
+            '''
+            xmlStr += '<road>' + \
                         '<road_id>' + road.road_id + '</road_id>' + \
                         '<link_id>' + road.link_id + '</link_id>' + \
                         '<name>' + road.name + '</name>' + \
@@ -243,7 +252,19 @@ class VirtualGate():
                             '<x2>' + road.position2.x + '</x2>' + \
                             '<y2>' + road.position2.y + '</y2>' + \
                         '</position>'
+            '''
             
+            xmlStr += '<road>' + \
+                        '<road_id>' + road.road_id + '</road_id>' + \
+                        '<link_id>' + road.link_id + '</link_id>' + \
+                        '<direction>' + road.direction + '</direction>' + \
+                        '<position>' + \
+                            '<x1>' + road.position1.x + '</x1>' + \
+                            '<y1>' + road.position1.y + '</y1>' + \
+                            '<x2>' + road.position2.x + '</x2>' + \
+                            '<y2>' + road.position2.y + '</y2>' + \
+                        '</position>'
+                        
             if len(road.lanes) > 0:
                 xmlStr += '<lanes>'
                 
@@ -251,6 +272,7 @@ class VirtualGate():
                     
                     xmlStr += '<lane>' + \
                                 '<lane_id>' + lane.lane_id + '</lane_id>' + \
+                                '<ForwardDirection>' + lane.straight + lane.rightTurn + lane.leftTurn + lane.uTurn + '</ForwardDirection>' + \
                                 '<position>' + \
                                     '<x1>' + lane.position1.x + '</x1>' + \
                                     '<y1>' + lane.position1.y + '</y1>' + \
@@ -262,9 +284,9 @@ class VirtualGate():
                     
                 xmlStr += '</lanes>'
                     
-            xmlStr += '</Road>'
+            xmlStr += '</road>'
         
-        xmlStr += '</Virtual_gate>'
+        xmlStr += '</virtual_gate>'
         
         return xmlStr
         
@@ -274,9 +296,9 @@ class Road():
         
         self.road_id = ''
         self.link_id = ''
-        self.name = ''
+        #self.name = ''
         self.direction = ''
-        self.section = ''
+        #self.section = ''
         self.position1 = PointPosition()
         self.position2 = PointPosition()
         
@@ -288,9 +310,9 @@ class Road():
         if road:
             self.road_id = road.find('road_id').text
             self.link_id = road.find('link_id').text
-            self.name = road.find('name').text
+            #self.name = road.find('name').text
             self.direction = road.find('direction').text
-            self.section = road.find('section').text
+            #self.section = road.find('section').text
             
             self.position1.x = safeNodeText(road.find('position/x1'))
             self.position1.y = safeNodeText(road.find('position/y1'))
@@ -301,12 +323,18 @@ class Road():
                 self.lanes.append(Lane(lane))
                 
     def getValues(self):
-        return [self.road_id, self.link_id, self.name, self.direction, self.section, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
+        #return [self.road_id, self.link_id, self.name, self.direction, self.section, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
+        return [self.road_id, self.link_id, self.direction, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
         
 class Lane():
     
     def __init__(self, lane):
         self.lane_id = ''
+        self.forward_direction = '0000'
+        self.straight = '0'
+        self.rightTurn = '0'
+        self.leftTurn = '0'
+        self.uTurn = '0'
         self.position1 = PointPosition()
         self.position2 = PointPosition()
         
@@ -316,28 +344,61 @@ class Lane():
         
         if lane:
             self.lane_id = safeNodeText(lane.find('lane_id'))
+            self.forward_direction = safeNodeText(lane.find('ForwardDirection'))
+            self.extractForwardDirection()
+            
             self.position1.x = safeNodeText(lane.find('position/x1'))
             self.position1.y = safeNodeText(lane.find('position/y1'))
             self.position2.x = safeNodeText(lane.find('position/x2'))
             self.position2.y = safeNodeText(lane.find('position/y2'))
     
+    def extractForwardDirection(self):
+        
+        straight = '0'
+        rightTurn = '0'
+        leftTurn = '0'
+        uTurn = '0'
+                
+        if len(self.forward_direction) == 4:
+            try:
+                straight = self.forward_direction[0]
+                rightTurn = self.forward_direction[1]
+                leftTurn = self.forward_direction[2] 
+                uTurn = self.forward_direction[3]               
+            except:
+                straight = '0'
+                rightTurn = '0'
+                leftTurn = '0'
+                uTurn = '0'
+
+        self.straight = straight
+        self.rightTurn = rightTurn
+        self.leftTurn = leftTurn
+        self.uTurn = uTurn
+    
     def getValues(self):
-        return [self.lane_id, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
+        #return [self.lane_id, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
+        return [self.lane_id, self.straight, self.rightTurn, self.leftTurn, self.uTurn, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
+        
     
 class CCTVConfiguration():
     
     
     def __init__(self, xmlPath = ''):
         
+        self.xmlPath = xmlPath
+        self.fileHelper = FileHelper()
+        
         self.root = None
         self.header = None
         self.roadInfo = None
         self.virtualGate = None
         
-        if xmlPath != '':
-            self.loadXmlFile(xmlPath)
+        if self.xmlPath != '':
+            self.loadXmlFile(self.xmlPath)
     
     def loadXmlFile(self, xmlPath):
+        self.xmlPath = xmlPath
         self.xml = ElementTree.parse(xmlPath)
         self.loadXml(self.xml)
     
@@ -355,12 +416,14 @@ class CCTVConfiguration():
         header = Header(self.root.find('header'))
         return header
         
-    def getRoadInfo(self):
-        roadInfo = RoadInfo(self.root.find('RoadInformation'))
+    def getRoadInfo(self):  
+        #roadInfo = RoadInfo(self.root.find('RoadInformation'))
+        roadInfo = RoadInfo(self.root.find('road_information'))
         return roadInfo
         
     def getVirtualGate(self):
-        virtualGate = VirtualGate(self.root.find('Virtual_gate'))
+        #virtualGate = VirtualGate(self.root.find('Virtual_gate'))
+        virtualGate = VirtualGate(self.root.find('virtual_gate'))
         return virtualGate
     
     def showInTree(self, tree):
@@ -399,13 +462,42 @@ class CCTVConfiguration():
         xmlStr = self.header.toXmlString() + self.roadInfo.toXmlString() + self.virtualGate.toXmlString()
         xmlStr = '<Configuration type="cctv">' + xmlStr + '</Configuration>'
         return xmlStr
+    
+    def save(self, path = ''):
         
+        #tree = ElementTree.fromstring(self.toXmlString())
+        #xmlStr = etree.tostring(tree, pretty_print = True)
+        
+        reparsed = minidom.parseString(self.toXmlString())
+        xmlStr = reparsed.toprettyxml(indent = '    ')
+        print(xmlStr)
+        
+        if self.xmlPath == '':
+            self.xmlPath = self.fileHelper.GetFile(None, 'Save CCTV Configuration', OptionType.Save)
+        
+        if self.xmlPath != '':
+
+            if os.path.exists(self.xmlPath):
+                print('overwrite file: ', self.xmlPath)
+            else:
+                print('create file: ', self.xmlPath)
+
+            self.fileHelper.WriteFile(xmlStr, self.xmlPath)
+            
+            
+            
+            
 if __name__ == "__main__":
     
-    xmlPath = 'D:/_Course/Project/LabelTool/data/cctv_configuration.xml'
+    #xmlPath = 'D:/_Course/Project/LabelTool/data/cctv_configuration.xml'
+    xmlPath = 'D:/_Course/Project/LabelTool/data/cctv_configuration_IF-065-1.xml'
     config = CCTVConfiguration(xmlPath)
     
-    print(config.getHeader())
-    print(config.getRoadInfo())
-    print(config.getVirtualGate())
+    #print(config.getHeader())
+    #print(config.getRoadInfo())
+    #print(config.getVirtualGate())
+    
+    print(config.toXmlString())
+    config.save()
+
     

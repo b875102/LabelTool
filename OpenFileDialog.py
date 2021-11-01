@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from FileHelper import FileHelper
+from FileHelper import OptionType
 from TextEdit import TextEdit
 
 class OpenFileDialog(QtWidgets.QDialog):
@@ -32,19 +33,19 @@ class OpenFileDialog(QtWidgets.QDialog):
         super().show()
         
     def btnIllustration_Click(self):
-        fileName = self.fileHelper.GetFile(self, 'Open Illustration Image')
+        fileName = self.fileHelper.GetFile(self, 'Open Illustration Image', OptionType.Open)
         self.txtIllustration.setText(fileName)
 
     def btnCCTVImage_Click(self):
-        fileName = self.fileHelper.GetFile(self, 'Open CCTV Image')
+        fileName = self.fileHelper.GetFile(self, 'Open CCTV Image', OptionType.Open)
         self.txtCCTVImage.setText(fileName)
     
     def btnIntersectionConfiguration_Click(self):
-        fileName = self.fileHelper.GetFile(self, 'Open Intersection Configuration')
+        fileName = self.fileHelper.GetFile(self, 'Open Intersection Configuration', OptionType.Open)
         self.txtIntersectionConfiguration.setText(fileName)
         
     def btnCCTVConfiguration_Click(self):
-        fileName = self.fileHelper.GetFile(self, 'Open CCTV Configuration')
+        fileName = self.fileHelper.GetFile(self, 'Open CCTV Configuration', OptionType.Open)
         self.txtCCTVConfiguration.setText(fileName)
         
     def checkResult(self):

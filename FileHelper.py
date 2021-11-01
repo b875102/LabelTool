@@ -7,9 +7,16 @@ from PyQt5.QtCore import QPoint
 import xml.etree.ElementTree as ET
 import xmltodict
 
+from enum import Enum
+#from enum import IntEnum
+#from enum import IntFlag
+
 from Label import Label
 
-
+class OptionType(Enum):
+    Open = 0
+    Save = 1
+    
 class FileHelper(QFileDialog):
     
     _DEFAULT_PATH = './'
@@ -86,12 +93,34 @@ class FileHelper(QFileDialog):
     def C2Int(self, c):
         return int(float(c))
     
-    def GetFile(self, parent, caption):
+    def GetFile(self, parent, caption, optionType):
         #selectedPath = QFileDialog.getExistingDirectory(parent, caption, self.lastDir)
         #selectedPath = QFileDialog.getOpenFileName(parent, caption, self.lastDir, self._DEFAULT_FILE_TYPE);
-        selectedPath = QFileDialog.getOpenFileName(parent, caption, self.lastDir)
-        return selectedPath[0]
         
+        if optionType == OptionType.Open:
+            selectedPath = QFileDialog.getOpenFileName(parent, caption, self.lastDir)
+        else:
+            selectedPath = QFileDialog.getSaveFileName(parent, caption, self.lastDir)
+        
+        selectedPath = selectedPath[0]
+        
+        if selectedPath != '':
+            self.lastDir = os.path.dirname(selectedPath)
+            
+        return selectedPath
+       
+    def WriteFile(self, content, path):
+        f = None
+        try:
+            f = open(path, 'w')
+            f.write(content)
+        except Exception as ex:
+            print('error occured: ', ex)
+        finally:
+            if f != None:
+                f.close()
+
+    
 if __name__ == "__main__":
     
     from PyQt5 import QtCore

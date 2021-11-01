@@ -1,3 +1,4 @@
+#import os
 import xml.etree.ElementTree as ElementTree
 #from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import QTreeWidgetItem
@@ -87,12 +88,14 @@ class IntersectionConfiguration():
     
     def __init__(self, xmlPath = ''):
 
+        self.xmlPath = xmlPath
+        
         self.root = None
         self.header = None
         self.roadInfo = None
         
-        if xmlPath != '':
-            self.loadXml(xmlPath)
+        if self.xmlPath != '':
+            self.loadXml(self.xmlPath)
     
     def loadXml(self, xmlPath):
         self.tree = ElementTree.parse(xmlPath)
@@ -147,9 +150,9 @@ class IntersectionConfiguration():
             
             cctvRoad.road_id = str(idxRoad)
             cctvRoad.link_id = isRoad.link_id
-            cctvRoad.name = isRoad.name
+            #cctvRoad.name = isRoad.name
             cctvRoad.direction = isRoad.direction
-            cctvRoad.section = isRoad.section
+            #cctvRoad.section = isRoad.section
             
             #cctvRoad.position1 = PointPosition()
             #cctvRoad.position2 = PointPosition()
@@ -158,11 +161,24 @@ class IntersectionConfiguration():
                 
                 lane = CCTVLane(None)
                 lane.lane_id = str(idxLane)
+                lane.forward_direction = ''
                 cctvRoad.lanes.append(lane)
             
             cctvVirtualGate.roads.append(cctvRoad)
-
+        
+        '''
+        dirname = os.path.dirname(self.xmlPath)
+        basename = os.path.basename(self.xmlPath).replace('Intersection', 'cctv').replace('intersection', 'cctv')
+        xmlPath = os.path.join(dirname, basename)
+        
+        if xmlPath == self.xmlPath:
+            basename = 'cctv_{0}'.format(basename)
+            xmlPath = os.path.join(dirname, basename)
+        '''
+        
+        
         cctvConfig = CCTVConfiguration()
+        #cctvConfig.xmlPath = xmlPath
         cctvConfig.header = cctvHeader
         cctvConfig.roadInfo = cctvRoadInfo
         cctvConfig.virtualGate = cctvVirtualGate
@@ -176,3 +192,7 @@ if __name__ == "__main__":
     
     print(config.getHeader())
     print(config.getRoadInfo())
+    
+    cctvConfig = config.toCCTVConfiguration()
+    #print(cctvConfig.toXmlString())
+    cctvConfig.save()

@@ -140,7 +140,7 @@ class Image(QtCore.QObject):
                     
                     if self.locked:
                         popLabel = tmpLabels.pop(self.lockedLabelIndex)
-                        tmpLabels.append(Label(self.lastPoint, currentPosition, self.lockedLabel.roadType, self.lockedLabel.roadIdx, self.lockedLabel.roadId))
+                        tmpLabels.append(Label(self.lastPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId))
                     else:
                         tmpLabels.append(Label(self.lastPoint, currentPosition))
                         
@@ -157,9 +157,9 @@ class Image(QtCore.QObject):
                         label.selectedEndpoint = currentPosition
                     elif self.movingBasePoint:
                         shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
-                        p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
-                        p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
-                        label = Label(p1, p2, self.selectedLabel.roadType, self.selectedLabel.roadIdx, self.selectedLabel.roadId)
+                        p1 = QPoint(popLabel.shape.p1.x() + shiftX, popLabel.shape.p1.y() + shiftY)
+                        p2 = QPoint(popLabel.shape.p2.x() + shiftX, popLabel.shape.p2.y() + shiftY)
+                        label = Label(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                         
                     if label:
                         label.selected = True
@@ -169,6 +169,9 @@ class Image(QtCore.QObject):
             
             if not self.locked:
             
+                for label in self.labels:
+                    label.selected = False
+                    
                 #print('just mouse move')
                 for label in self.labels:
                     #label.isSelected(event.pos())
@@ -190,8 +193,8 @@ class Image(QtCore.QObject):
                 
                 if self.locked:
                     if Label.isDifferent(self.lastPoint, currentPosition):
-                        self.labels.pop(self.lockedLabelIndex)
-                        label = Label(self.lastPoint, currentPosition, self.lockedLabel.roadType, self.lockedLabel.roadIdx, self.lockedLabel.roadId)
+                        popLabel = self.labels.pop(self.lockedLabelIndex)
+                        label = Label(self.lastPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                         self.labels.append(label)
                         #self.labels.append(Label(self.lastPoint, currentPosition))
                     else:
@@ -206,16 +209,16 @@ class Image(QtCore.QObject):
                     
             elif self.moving:
                 #print('release moving')
-                self.labels.pop(self.selectedIndex)
+                popLabel = self.labels.pop(self.selectedIndex)
                 
                 label = None
                 if self.pivotPoint:
-                    label = Label(self.pivotPoint, currentPosition, self.selectedLabel.roadType, self.selectedLabel.roadIdx, self.selectedLabel.roadId)
+                    label = Label(self.pivotPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                 elif self.movingBasePoint:
                     shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
-                    p1 = QPoint(self.selectedLabel.shape.p1.x() + shiftX, self.selectedLabel.shape.p1.y() + shiftY)
-                    p2 = QPoint(self.selectedLabel.shape.p2.x() + shiftX, self.selectedLabel.shape.p2.y() + shiftY)
-                    label = Label(p1, p2, self.selectedLabel.roadType, self.selectedLabel.roadIdx, self.selectedLabel.roadId)
+                    p1 = QPoint(popLabel.shape.p1.x() + shiftX, popLabel.shape.p1.y() + shiftY)
+                    p2 = QPoint(popLabel.shape.p2.x() + shiftX, popLabel.shape.p2.y() + shiftY)
+                    label = Label(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                     
                 if label:
                     self.labels.append(label)
