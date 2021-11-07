@@ -1,5 +1,7 @@
 import sys
 import copy
+from functools import partial
+
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from Label import Label
@@ -452,17 +454,19 @@ class LabelTool(QtWidgets.QMainWindow):
         self.tblRoad.setHorizontalHeaderLabels(header)
         
         #self.tblRoad.hideColumn(9)
-        #self.tblRoad.hideColumn(7)
+        self.tblRoad.hideColumn(7)
         
         #header = ['lane_id', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
-        header = ['lane_id', 'Straight', 'Right Turn', 'Left Turn', 'U Turn', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
+        #header = ['lane_id', 'Straight', 'Right Turn', 'Left Turn', 'U Turn', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
+        header = ['lane_id', 'Left Turn', 'U Turn', 'Right Turn', 'Straight', 'x1', 'y1', 'x2', 'y2', 'roadIdx', 'laneIdx']
+        
         self.tblLane.setColumnCount(self._TABLE_COLUMNS_LANE)
         self.tblLane.setHorizontalHeaderLabels(header)
         
         #self.tblLane.hideColumn(5)
         #self.tblLane.hideColumn(6)
-        #self.tblLane.hideColumn(9)
-        #self.tblLane.hideColumn(10)        
+        self.tblLane.hideColumn(9)
+        self.tblLane.hideColumn(10)        
         
     def __ShowConfig(self, cctvConfig):
         
@@ -548,26 +552,88 @@ class LabelTool(QtWidgets.QMainWindow):
         
         cbo = self.sender()
         
-        #index = cbo.currentIndex()
-        row = cbo.property('row')
-        col = cbo.property('col')
-        txt = cbo.currentText()
-        
-        item = self.tblRoad.item(row , col)
-        item.setText(txt)
-        
-        '''
-        row = item.row()
-        col = item.column()
-        item.setText(txt)
-        txt = item.text()
-        
-        print('__TblRoadDirectionItemChanged: row = ', row, ', col = ', col, ', index = ', index, ', text = ', txt)
-        '''
+        if type(cbo).__name__ == 'QComboBox':
+            
+            #index = cbo.currentIndex()
+            row = cbo.property('row')
+            col = cbo.property('col')
+            txt = cbo.currentText()
+            
+            item = self.tblRoad.item(row , col)
+            item.setText(txt)
+            
+            '''
+            row = item.row()
+            col = item.column()
+            item.setText(txt)
+            txt = item.text()
+            
+            print('__TblRoadDirectionItemChanged: row = ', row, ', col = ', col, ', index = ', index, ', text = ', txt)
+            '''
         
     def __AddTblLaneRow(self, contents):
         addedRowIdx = self.__AddTableRow(self.tblLane, contents)
-                    
+        
+        for rowIdx in addedRowIdx:
+            
+            for colIdx in [1, 2, 3, 4]:
+
+                cellWidget = QtWidgets.QWidget()
+                hBoxLayout = QtWidgets.QHBoxLayout(cellWidget)
+                
+                chkbox = QtWidgets.QCheckBox()
+                
+                chkbox.setProperty('row', rowIdx)
+                chkbox.setProperty('col', colIdx)
+                chkbox.stateChanged.connect(self.__tblLaneForwordDirectionStatusChanged)
+
+                
+                '''
+                slot = partial(self.__tblLaneForwordDirectionStatusChanged, chkbox)
+                chkbox.stateChanged.connect(lambda x: slot())
+                chkbox.stateChanged.connect(lambda: self.__tblLaneForwordDirectionStatusChanged(chkbox, rowIdx, colIdx))
+                '''
+                
+                hBoxLayout.addWidget(chkbox)
+                hBoxLayout.setAlignment(QtCore.Qt.AlignCenter)            
+                hBoxLayout.setContentsMargins(0, 0, 0, 0)
+                cellWidget.setLayout(hBoxLayout)
+    
+                self.tblLane.setCellWidget(rowIdx, colIdx, cellWidget)
+                
+                item = self.tblLane.item(rowIdx, colIdx)
+                item.setTextAlignment(QtCore.Qt.AlignCenter)
+                
+                if item.text() == '1':
+                    chkbox.setCheckState(QtCore.Qt.Checked)  
+                else:
+                    chkbox.setCheckState(QtCore.Qt.Unchecked)  
+                
+                #item.setText('')
+                
+                '''
+                chkbox = QtWidgets.QCheckBox()
+                chkbox.setStyleSheet("margin-left:50%; margin-right:50%;")
+                '''
+    #def __tblLaneForwordDirectionStatusChanged(self, chk):
+    def __tblLaneForwordDirectionStatusChanged(self):
+        
+        chk = self.sender()
+        
+        if type(chk).__name__ == 'QCheckBox':
+        
+            row = chk.property('row')
+            col = chk.property('col')
+            
+            #print('tblLaneForwordDirectionStatusChanged: ', row, col)
+            
+            txt = '0'
+            if chk.isChecked():
+                txt = '1'
+                
+            item = self.tblLane.item(row , col)
+            item.setText(txt)
+                
     def __tblReferencePoints_ItemChanged(self, item):
         self.__tblItemChanged(self.tblReferencePoints, item)
 
@@ -832,10 +898,12 @@ class LabelTool(QtWidgets.QMainWindow):
                 '''
                 
                 cctvLane.lane_id = self.tblLane.item(idx, 0).text()
-                cctvLane.straight = self.tblLane.item(idx, 1).text()
-                cctvLane.rightTurn = self.tblLane.item(idx, 2).text()
-                cctvLane.leftTurn = self.tblLane.item(idx, 3).text()
-                cctvLane.uTurn = self.tblLane.item(idx, 4).text()
+                
+                cctvLane.leftTurn = self.tblLane.item(idx, 1).text()
+                cctvLane.uTurn = self.tblLane.item(idx, 2).text()
+                cctvLane.rightTurn = self.tblLane.item(idx, 3).text()
+                cctvLane.straight = self.tblLane.item(idx, 4).text()
+                
                 cctvLane.position1.x = self.tblLane.item(idx, 5).text()
                 cctvLane.position1.y = self.tblLane.item(idx, 6).text()
                 cctvLane.position2.x = self.tblLane.item(idx, 7).text()

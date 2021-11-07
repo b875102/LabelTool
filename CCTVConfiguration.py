@@ -272,7 +272,7 @@ class VirtualGate():
                     
                     xmlStr += '<lane>' + \
                                 '<lane_id>' + lane.lane_id + '</lane_id>' + \
-                                '<ForwardDirection>' + lane.straight + lane.rightTurn + lane.leftTurn + lane.uTurn + '</ForwardDirection>' + \
+                                '<ForwardDirection>' + lane.leftTurn + lane.uTurn + lane.rightTurn + lane.straight + '</ForwardDirection>' + \
                                 '<position>' + \
                                     '<x1>' + lane.position1.x + '</x1>' + \
                                     '<y1>' + lane.position1.y + '</y1>' + \
@@ -356,30 +356,33 @@ class Lane():
         
         straight = '0'
         rightTurn = '0'
-        leftTurn = '0'
         uTurn = '0'
+        leftTurn = '0'
+        
                 
         if len(self.forward_direction) == 4:
             try:
-                straight = self.forward_direction[0]
-                rightTurn = self.forward_direction[1]
-                leftTurn = self.forward_direction[2] 
-                uTurn = self.forward_direction[3]               
+                straight = self.forward_direction[3]
+                rightTurn = self.forward_direction[2]
+                uTurn = self.forward_direction[1]
+                leftTurn = self.forward_direction[0] 
+                            
             except:
                 straight = '0'
                 rightTurn = '0'
-                leftTurn = '0'
                 uTurn = '0'
+                leftTurn = '0'
 
         self.straight = straight
         self.rightTurn = rightTurn
-        self.leftTurn = leftTurn
         self.uTurn = uTurn
+        self.leftTurn = leftTurn
+
     
     def getValues(self):
         #return [self.lane_id, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
-        return [self.lane_id, self.straight, self.rightTurn, self.leftTurn, self.uTurn, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
-        
+        #return [self.lane_id, self.straight, self.rightTurn, self.leftTurn, self.uTurn, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
+        return [self.lane_id, self.leftTurn, self.uTurn, self.rightTurn, self.straight, self.position1.x, self.position1.y, self.position2.x, self.position2.y]
     
 class CCTVConfiguration():
     
