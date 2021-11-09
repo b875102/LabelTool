@@ -328,45 +328,39 @@ class LabelTool(QtWidgets.QMainWindow):
             if label.roadType == RoadType.Road:
 
                 roadIdx = label.roadIdx
-            
-                self.cctvConfig.virtualGate.roads[roadIdx].position1.x = str(label.shape.p1.x())
-                self.cctvConfig.virtualGate.roads[roadIdx].position1.y = str(label.shape.p1.y())
-                self.cctvConfig.virtualGate.roads[roadIdx].position2.x = str(label.shape.p2.x())
-                self.cctvConfig.virtualGate.roads[roadIdx].position2.y = str(label.shape.p2.y())
                 
-                '''
-                self.tblRoad.item(roadIdx, 5).setText(str(label.shape.p1.x()))
-                self.tblRoad.item(roadIdx, 6).setText(str(label.shape.p1.y()))
-                self.tblRoad.item(roadIdx, 7).setText(str(label.shape.p2.x()))
-                self.tblRoad.item(roadIdx, 8).setText(str(label.shape.p2.y()))
-                '''
-                self.tblRoad.item(roadIdx, 3).setText(str(label.shape.p1.x()))
-                self.tblRoad.item(roadIdx, 4).setText(str(label.shape.p1.y()))
-                self.tblRoad.item(roadIdx, 5).setText(str(label.shape.p2.x()))
-                self.tblRoad.item(roadIdx, 6).setText(str(label.shape.p2.y()))
+                p1, p2 = label.getPoints()
+                road = self.cctvConfig.virtualGate.roads[roadIdx]
                 
+                road.position1.x = str(p1.x())
+                road.position1.y = str(p1.y())
+                road.position2.x = str(p2.x())
+                road.position2.y = str(p2.y())
+                
+                self.tblRoad.item(roadIdx, 3).setText(road.position1.x)
+                self.tblRoad.item(roadIdx, 4).setText(road.position1.y)
+                self.tblRoad.item(roadIdx, 5).setText(road.position2.x)
+                self.tblRoad.item(roadIdx, 6).setText(road.position2.y)	
+
             elif label.roadType == RoadType.Lane:
                 
                 (roadIdx, laneIdx) = label.roadIdx
                 
-                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position1.x = str(label.shape.p1.x())
-                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position1.y = str(label.shape.p1.y())
-                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position2.x = str(label.shape.p2.x())
-                self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx].position2.y = str(label.shape.p2.y())   
+                p1, p2 = label.getPoints()
+                lane = self.cctvConfig.virtualGate.roads[roadIdx].lanes[laneIdx]
+                
+                lane.position1.x = str(p1.x())
+                lane.position1.y = str(p1.y())
+                lane.position2.x = str(p2.x())
+                lane.position2.y = str(p2.y()) 
                 
                 if self.keepRoadIdxOfLanes == roadIdx:
                     
-                    '''
-                    self.tblLane.item(laneIdx, 1).setText(str(label.shape.p1.x()))
-                    self.tblLane.item(laneIdx, 2).setText(str(label.shape.p1.y()))
-                    self.tblLane.item(laneIdx, 3).setText(str(label.shape.p2.x()))
-                    self.tblLane.item(laneIdx, 4).setText(str(label.shape.p2.y()))
-                    '''
-                    self.tblLane.item(laneIdx, 5).setText(str(label.shape.p1.x()))
-                    self.tblLane.item(laneIdx, 6).setText(str(label.shape.p1.y()))
-                    self.tblLane.item(laneIdx, 7).setText(str(label.shape.p2.x()))
-                    self.tblLane.item(laneIdx, 8).setText(str(label.shape.p2.y()))                    
-                    
+                    self.tblLane.item(laneIdx, 5).setText(lane.position1.x)
+                    self.tblLane.item(laneIdx, 6).setText(lane.position1.y)
+                    self.tblLane.item(laneIdx, 7).setText(lane.position2.x)
+                    self.tblLane.item(laneIdx, 8).setText(lane.position2.y) 
+
         #self.__refreshCCTVConfigAndLabel(self.cctvConfig)
         
         self.refreshRoadTable = False
@@ -432,13 +426,17 @@ class LabelTool(QtWidgets.QMainWindow):
             p1, p2 = road.position1, road.position2
             
             #if p1.hasValue() and p2.hasValue:
-            labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx, (road.road_id, road.link_id)))
-                
+            #labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx, (road.road_id, road.link_id)))
+            labels.append(self.image.newLabel(p1.toQPoint(), p2.toQPoint(), RoadType.Road, roadIdx, (road.road_id, road.link_id)))
+            
+            
             for laneIdx, lane in enumerate(road.lanes):
                 p1, p2 = lane.position1, lane.position2
                 
                 #if p1.hasValue() and p2.hasValue:
-                labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Lane, (roadIdx, laneIdx), lane.lane_id))
+                #labels.append(Label(p1.toQPoint(), p2.toQPoint(), RoadType.Lane, (roadIdx, laneIdx), lane.lane_id))
+                labels.append(self.image.newLabel(p1.toQPoint(), p2.toQPoint(), RoadType.Lane, (roadIdx, laneIdx), lane.lane_id))
+                
         return labels
     
     def __initialTableHeader(self):

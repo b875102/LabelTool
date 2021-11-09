@@ -1,4 +1,5 @@
-from PyQt5.QtGui import QPainterPath, QColor, QFont, QFontMetrics
+from PyQt5.QtGui import QPainterPath, QColor, QFont, QFontMetrics, QPolygonF
+from PyQt5.QtCore import QLineF, QPointF
 
 from enum import Enum
 from enum import IntEnum
@@ -29,23 +30,26 @@ class Label():
         self.roadIdx = roadIdx
         self.roadId = roadId
         
-        self.shape = Line(p1, p2)
+        self.__shape = Line(p1, p2)
         
         self.selected = False
         self.selectedEndpoint = None
         self.pivotPoint = None
         
+    def setPoints(self, p1, p2):
+        self.__shape.setPoints(p1, p2)
+        
+    def getPoints(self):
+        return self.__shape.getPoints()
+        
     def isSelected(self, pos):
-        self.selected = self.shape.isSelected(pos)
+        self.selected = self.__shape.isSelected(pos)
         if self.selected:
-            self.selectedEndpoint, self.pivotPoint = self.shape.getSelectedEndpoint(pos)
+            self.selectedEndpoint, self.pivotPoint = self.__shape.getSelectedEndpoint(pos)
         else:
             self.selectedEndpoint = None
             self.pivotPoint = None
         return self.selected
-    
-    def getPoints(self):
-        return self.shape.p1, self.shape.p2
     
     def toString(self):
         p1, p2 = self.getPoints()
@@ -68,29 +72,58 @@ class Label():
             color = QColor(237, 125, 49)
         return color
         
+    def getArrow(self, p1, p2):
+        
+        line = QLineF(p1, p2)
+        line.setLength(line.length() - 10)
+        
+        v = line.unitVector()
+        v.setLength(10)
+        v.translate(QPointF(line.dx(), line.dy()))
+
+        n = v.normalVector()
+        n.setLength(n.length() * 0.4)
+        n2 = n.normalVector().normalVector()
+
+        p1 = v.p2()
+        p2 = n.p2()
+        p3 = n2.p2()
+
+        arrow = QPolygonF([p1, p2, p3, p1])        
+        return arrow
+        
     def getPainterPath(self, scalingRatio, roadFlagByte):
-        diameter = 10
+        diameter = 6
         radius = diameter / 2
-        p1_o, p2_o = self.getPoints()
+        p1_o, p2_o = self.__shape.getPoints()
         p1_s = p1_o * scalingRatio
         p2_s = p2_o * scalingRatio
         painterPath = QPainterPath()
         painterPath.moveTo(p1_s)
         painterPath.lineTo(p2_s)
         
-        p1Fp = painterPath.addEllipse
-        p2Fp = painterPath.addEllipse
+        p1selected = False
+        p2selected = False
         
         if self.selectedEndpoint:
-            if self.selectedEndpoint == self.shape.p1:
-                p1Fp = painterPath.addRect
-            elif self.selectedEndpoint == self.shape.p2:
-                p2Fp = painterPath.addRect
-  
+            if self.selectedEndpoint == p1_o:
+                p1selected = True
+            elif self.selectedEndpoint == p2_o:
+                p2selected = True
+
+        if p1selected:
+            p1Fp = painterPath.addRect
+        else:
+            p1Fp = painterPath.addEllipse
+        
         p1Fp(p1_s.x() - radius, p1_s.y() - radius, diameter, diameter)
-        p2Fp(p2_s.x() - radius, p2_s.y() - radius, diameter, diameter)
         
-        
+        if p2selected:
+            p2Fp = painterPath.addRect
+            p2Fp(p2_s.x() - radius, p2_s.y() - radius, diameter, diameter)
+        else:
+            painterPath.addPolygon(self.getArrow(p1_s, p2_s))
+            
         
         txtList = []
         
@@ -116,7 +149,7 @@ class Label():
             metrics = QFontMetrics(f)
             fontwidth, fontheight = metrics.width(t) / 2, metrics.height() / 2            
             
-            x, y = self.shape.getCentralXY()
+            x, y = self.__shape.getCentralXY()
             x = (x - fontwidth) * scalingRatio
             y = (y - fontheight) * scalingRatio
 

@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush, QColor
 import copy
 #from LabelList import LabelList
 from Label import Label
+from Label import LabelType
 from Label import RoadType
 from Label import RoadFlag
 
@@ -32,6 +33,8 @@ class Image(QtCore.QObject):
         self.pixmap = QPixmap(self.imagePath)
         self.scaledPixmap = self.pixmap.copy()
         self.cloneImage = self.scaledPixmap.copy()
+        
+        self.centerPos = self.centerPosition()
         
         self.scalingRatio = 1
         self.labels = []
@@ -140,9 +143,9 @@ class Image(QtCore.QObject):
                     
                     if self.locked:
                         popLabel = tmpLabels.pop(self.lockedLabelIndex)
-                        tmpLabels.append(Label(self.lastPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId))
+                        tmpLabels.append(self.newLabel(self.lastPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId))
                     else:
-                        tmpLabels.append(Label(self.lastPoint, currentPosition))
+                        tmpLabels.append(self.newLabel(self.lastPoint, currentPosition))
                         
                     self.drawLine(tmpLabels)
             elif self.moving:
@@ -153,13 +156,19 @@ class Image(QtCore.QObject):
                     
                     label = None
                     if self.pivotPoint:
-                        label = Label(self.pivotPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
+                        p1, p2 = popLabel.getPoints()
+                        if self.pivotPoint == p1:
+                            p1, p2 = self.pivotPoint, currentPosition
+                        elif self.pivotPoint == p2:
+                            p1, p2 = currentPosition, self.pivotPoint
+                        label = self.newLabel(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                         label.selectedEndpoint = currentPosition
                     elif self.movingBasePoint:
                         shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
-                        p1 = QPoint(popLabel.shape.p1.x() + shiftX, popLabel.shape.p1.y() + shiftY)
-                        p2 = QPoint(popLabel.shape.p2.x() + shiftX, popLabel.shape.p2.y() + shiftY)
-                        label = Label(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
+                        p1, p2 = popLabel.getPoints()
+                        p1 = QPoint(p1.x() + shiftX, p1.y() + shiftY)
+                        p2 = QPoint(p2.x() + shiftX, p2.y() + shiftY)
+                        label = self.newLabel(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                         
                     if label:
                         label.selected = True
@@ -194,9 +203,9 @@ class Image(QtCore.QObject):
                 if self.locked:
                     if Label.isDifferent(self.lastPoint, currentPosition):
                         popLabel = self.labels.pop(self.lockedLabelIndex)
-                        label = Label(self.lastPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
+                        label = self.newLabel(self.lastPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                         self.labels.append(label)
-                        #self.labels.append(Label(self.lastPoint, currentPosition))
+                        #self.labels.append(self.newLabel(self.lastPoint, currentPosition))
                     else:
                         return
                 else:
@@ -204,7 +213,7 @@ class Image(QtCore.QObject):
                 
                     '''
                     if Label.isDifferent(self.lastPoint, currentPosition):
-                        self.labels.append(Label(self.lastPoint, currentPosition))
+                        self.labels.append(self.newLabel(self.lastPoint, currentPosition))
                     '''
                     
             elif self.moving:
@@ -213,12 +222,18 @@ class Image(QtCore.QObject):
                 
                 label = None
                 if self.pivotPoint:
-                    label = Label(self.pivotPoint, currentPosition, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
+                    p1, p2 = popLabel.getPoints()
+                    if self.pivotPoint == p1:
+                        p1, p2 = self.pivotPoint, currentPosition
+                    elif self.pivotPoint == p2:
+                        p1, p2 = currentPosition, self.pivotPoint
+                    label = self.newLabel(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                 elif self.movingBasePoint:
                     shiftX, shiftY = currentPosition.x() - self.movingBasePoint.x(), currentPosition.y() - self.movingBasePoint.y()
-                    p1 = QPoint(popLabel.shape.p1.x() + shiftX, popLabel.shape.p1.y() + shiftY)
-                    p2 = QPoint(popLabel.shape.p2.x() + shiftX, popLabel.shape.p2.y() + shiftY)
-                    label = Label(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
+                    p1, p2 = popLabel.getPoints()
+                    p1 = QPoint(p1.x() + shiftX, p1.y() + shiftY)
+                    p2 = QPoint(p2.x() + shiftX, p2.y() + shiftY)
+                    label = self.newLabel(p1, p2, popLabel.roadType, popLabel.roadIdx, popLabel.roadId)
                     
                 if label:
                     self.labels.append(label)
@@ -255,6 +270,9 @@ class Image(QtCore.QObject):
         self.drawLine(self.labels)
         self._labelChangedEvent.emit(self.labels)
         
+    def newLabel(self, p1, p2, roadType = RoadType.Road, roadIdx = None, roadId = '', labelType = LabelType.Line):
+        return Label(p1, p2, roadType, roadIdx, roadId, labelType)
+        
     #implement
     '''
     def SetImage(self, imagePath, labels):
@@ -284,9 +302,7 @@ class Image(QtCore.QObject):
         updateLabelIndex, updateLabel = self.findLabel(roadType, roadIdx)
         if updateLabelIndex > -1:
             self.labels[updateLabelIndex].roadId = roadId
-            self.labels[updateLabelIndex].shape.setPoints(p1, p2)
-            #self.labels[updateLabelIndex].shape.p1 = p1
-            #self.labels[updateLabelIndex].shape.p2 = p2
+            self.labels[updateLabelIndex].setPoints(p1, p2)
             self.drawLine(self.labels)
         
     def ScaleImage(self, scaling = _SCALING_BASE):
@@ -308,6 +324,11 @@ class Image(QtCore.QObject):
         ratioWidth, ratioHeight = origSize.width() / scaledSize.width(), origSize.height() / scaledSize.height()
         p = QPoint(int(pos.x() * ratioWidth), int(pos.y() * ratioHeight))
         return p
+    
+    def centerPosition(self):
+        origSize = self.size()
+        p = QPoint(int(origSize.width() / 2), int(origSize.height() / 2))
+        return p
         
     def size(self):
         return self.pixmap.size()
@@ -322,11 +343,12 @@ class Image(QtCore.QObject):
         painter = QPainter(self.cloneImage)
         #painter.setRenderHint(QPainter.Antialiasing)
                               
-        pen = painter.pen()
         brush = painter.brush()
         
+        pen = painter.pen()
         pen.setWidth(2)
         pen.setStyle(Qt.SolidLine)
+        pen.setJoinStyle(Qt.MiterJoin)
         brush.setStyle(Qt.SolidPattern)
         
         '''

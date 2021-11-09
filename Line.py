@@ -12,14 +12,28 @@ class Line(Shape):
     def __init__(self, p1, p2):
         super().__init__(p1, p2)
         
-        self.lineType = self.getLineType(self.p1, self.p2)
-        self.ab = self.getAB(self.p1, self.p2)
+        self.setPoints(p1, p2)
 
     def setPoints(self, p1, p2):
         self.p1, self.p2 = p1, p2
-
         self.lineType = self.getLineType(self.p1, self.p2)
         self.ab = self.getAB(self.p1, self.p2)
+        
+        '''
+        swapP = False
+        if self.lineType == LineType.Slash:
+            swapP = (self.distance(self.cp, self.p1) > self.distance(self.cp, self.p2))
+        elif self.lineType == LineType.Horizontal:
+            swapP = (abs(self.cp.y() - self.p1.y()) > abs(self.cp.y() - self.p2.y()))
+        elif self.lineType == LineType.Vertical:
+            swapP = (abs(self.cp.x() - self.p1.x()) > abs(self.cp.x() - self.p2.x()))
+
+        if swapP:
+            self.p1, self.p2 = p2, p1
+        '''
+        
+    def getPoints(self):
+        return self.p1, self.p2
         
     def isSelected(self, pos):
         result = False
