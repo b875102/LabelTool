@@ -33,30 +33,40 @@
             <link_id>3001900107029Q</link_id>
             <direction>Out</direction>
             <position>
-                <x1>150</x1>
-                <y1>492</y1>
-                <x2>835</x2>
-                <y2>458</y2>
+                <x1>889</x1>
+                <y1>373</y1>
+                <x2>204</x2>
+                <y2>407</y2>
             </position>
             <lanes>
                 <lane>
                     <lane_id>1</lane_id>
-                    <ForwardDirection>0000</ForwardDirection>
+                    <ForwardDirection>1100</ForwardDirection>
                     <position>
-                        <x1>608</x1>
-                        <y1>640</y1>
-                        <x2>848</x2>
-                        <y2>520</y2>
+                        <x1>562</x1>
+                        <y1>693</y1>
+                        <x2>283</x2>
+                        <y2>827</y2>
                     </position>
                 </lane>
                 <lane>
                     <lane_id>2</lane_id>
-                    <ForwardDirection>0000</ForwardDirection>
+                    <ForwardDirection>0100</ForwardDirection>
                     <position>
                         <x1>835</x1>
                         <y1>458</y1>
                         <x2>357</x2>
                         <y2>495</y2>
+                    </position>
+                </lane>
+                <lane>
+                    <lane_id>3</lane_id>
+                    <ForwardDirection>0010</ForwardDirection>
+                    <position>
+                        <x1>1043</x1>
+                        <y1>543</y1>
+                        <x2>1644</x2>
+                        <y2>510</y2>
                     </position>
                 </lane>
             </lanes>
@@ -66,15 +76,15 @@
             <link_id>4016400001675Q</link_id>
             <direction>In</direction>
             <position>
-                <x1>107</x1>
-                <y1>327</y1>
-                <x2>168</x2>
-                <y2>280</y2>
+                <x1>168</x1>
+                <y1>280</y1>
+                <x2>107</x2>
+                <y2>327</y2>
             </position>
             <lanes>
                 <lane>
                     <lane_id>1</lane_id>
-                    <ForwardDirection>0010</ForwardDirection>
+                    <ForwardDirection>0100</ForwardDirection>
                     <position>
                         <x1>2595</x1>
                         <y1>2578</y1>
@@ -84,7 +94,7 @@
                 </lane>
                 <lane>
                     <lane_id>2</lane_id>
-                    <ForwardDirection>0010</ForwardDirection>
+                    <ForwardDirection>0100</ForwardDirection>
                     <position>
                         <x1>835</x1>
                         <y1>458</y1>
@@ -99,25 +109,25 @@
             <link_id>4016400001675Q</link_id>
             <direction>Out</direction>
             <position>
-                <x1>168</x1>
-                <y1>280</y1>
-                <x2>222</x2>
-                <y2>248</y2>
+                <x1>222</x1>
+                <y1>248</y1>
+                <x2>168</x2>
+                <y2>280</y2>
             </position>
             <lanes>
                 <lane>
                     <lane_id>1</lane_id>
                     <ForwardDirection>0000</ForwardDirection>
                     <position>
-                        <x1>595</x1>
-                        <y1>578</y1>
-                        <x2>835</x2>
-                        <y2>458</y2>
+                        <x1>835</x1>
+                        <y1>458</y1>
+                        <x2>595</x2>
+                        <y2>578</y2>
                     </position>
                 </lane>
                 <lane>
                     <lane_id>2</lane_id>
-                    <ForwardDirection>0000</ForwardDirection>
+                    <ForwardDirection>0100</ForwardDirection>
                     <position>
                         <x1>835</x1>
                         <y1>458</y1>
@@ -132,15 +142,15 @@
             <link_id>3001900107078Q</link_id>
             <direction>In</direction>
             <position>
-                <x1>386</x1>
-                <y1>194</y1>
-                <x2>682</x2>
-                <y2>170</y2>
+                <x1>682</x1>
+                <y1>170</y1>
+                <x2>386</x2>
+                <y2>194</y2>
             </position>
             <lanes>
                 <lane>
                     <lane_id>1</lane_id>
-                    <ForwardDirection>1000</ForwardDirection>
+                    <ForwardDirection>0010</ForwardDirection>
                     <position>
                         <x1>682</x1>
                         <y1>170</y1>
@@ -150,7 +160,7 @@
                 </lane>
                 <lane>
                     <lane_id>2</lane_id>
-                    <ForwardDirection>1100</ForwardDirection>
+                    <ForwardDirection>0011</ForwardDirection>
                     <position>
                         <x1>578</x1>
                         <y1>178</y1>
@@ -175,10 +185,10 @@
                     <lane_id>1</lane_id>
                     <ForwardDirection>0000</ForwardDirection>
                     <position>
-                        <x1>5682</x1>
-                        <y1>5170</y1>
-                        <x2>5578</x2>
-                        <y2>5178</y2>
+                        <x1>5578</x1>
+                        <y1>5178</y1>
+                        <x2>5682</x2>
+                        <y2>5170</y2>
                     </position>
                 </lane>
             </lanes>
@@ -196,12 +206,68 @@
             <lanes>
                 <lane>
                     <lane_id>1</lane_id>
-                    <ForwardDirection>1000</ForwardDirection>
+                    <ForwardDirection>0010</ForwardDirection>
                     <position>
-                        <x1>6682</x1>
-                        <y1>6170</y1>
-                        <x2>6578</x2>
-                        <y2>6178</y2>
+                        <x1>6578</x1>
+                        <y1>6178</y1>
+                        <x2>6682</x2>
+                        <y2>6170</y2>
+                    </position>
+                </lane>
+            </lanes>
+        </road>
+        <road>
+            <road_id/>
+            <link_id/>
+            <direction>In</direction>
+            <position>
+                <x1>384</x1>
+                <y1>331</y1>
+                <x2>535</x2>
+                <y2>244</y2>
+            </position>
+            <lanes>
+                <lane>
+                    <lane_id/>
+                    <ForwardDirection>0000</ForwardDirection>
+                    <position>
+                        <x1>778</x1>
+                        <y1>263</y1>
+                        <x2>594</x2>
+                        <y2>304</y2>
+                    </position>
+                </lane>
+            </lanes>
+        </road>
+        <road>
+            <road_id/>
+            <link_id/>
+            <direction>In</direction>
+            <position>
+                <x1>300</x1>
+                <y1>358</y1>
+                <x2>367</x2>
+                <y2>261</y2>
+            </position>
+            <lanes>
+                <lane>
+                    <lane_id/>
+                    <ForwardDirection>0000</ForwardDirection>
+                    <position>
+                        <x1>665</x1>
+                        <y1>328</y1>
+                        <x2>540</x2>
+                        <y2>336</y2>
+                    </position>
+                </lane>
+                <lane>
+                    <lane_id/>
+                    <ForwardDirection>0000</ForwardDirection>
+                    <position>
+                        <x1>862</x1>
+                        <y1>195</y1>
+                        <x2>722</x2>
+                        <y2>253</y2>
                     </position>
                 </lane>
             </lanes>

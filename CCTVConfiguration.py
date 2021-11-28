@@ -12,9 +12,10 @@ from FileHelper import OptionType
 def safeNodeText(node):
     txt = ''
     try:
-        txt = node.text
+        if node.text != None:
+            txt = node.text
     except:
-        pass
+        txt = ''
     return txt
     
 class PointPosition():
@@ -254,6 +255,12 @@ class VirtualGate():
                         '</position>'
             '''
             
+            '''
+            print('road_id', road.road_id)
+            if road.road_id == '6':
+                print('')
+            '''  
+            
             xmlStr += '<road>' + \
                         '<road_id>' + road.road_id + '</road_id>' + \
                         '<link_id>' + road.link_id + '</link_id>' + \
@@ -297,7 +304,7 @@ class Road():
         self.road_id = ''
         self.link_id = ''
         #self.name = ''
-        self.direction = ''
+        self.direction = 'In'
         #self.section = ''
         self.position1 = PointPosition()
         self.position2 = PointPosition()
@@ -308,11 +315,11 @@ class Road():
     def extract(self, road):
         
         if road:
-            self.road_id = road.find('road_id').text
-            self.link_id = road.find('link_id').text
-            #self.name = road.find('name').text
-            self.direction = road.find('direction').text
-            #self.section = road.find('section').text
+            self.road_id = safeNodeText(road.find('road_id'))
+            self.link_id = safeNodeText(road.find('link_id'))
+            #self.name = safeNodeText(road.find('name'))
+            self.direction = safeNodeText(road.find('direction'))
+            #self.section = safeNodeText(road.find('section'))
             
             self.position1.x = safeNodeText(road.find('position/x1'))
             self.position1.y = safeNodeText(road.find('position/y1'))

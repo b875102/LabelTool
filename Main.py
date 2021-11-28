@@ -50,10 +50,14 @@ def loadForDev():
     fileDict['IntersectionConfiguration'] = os.path.join(folder, 'Intersection_configuration.xml')
     fileDict['CCTVConfiguration'] = os.path.join(folder, 'cctv_configuration.xml')
     '''
-
+    
     fileDict['IntersectionConfiguration'] = os.path.join(folder, 'Intersection_configuration_IF-065.xml')
     fileDict['CCTVConfiguration'] = os.path.join(folder, 'cctv_configuration_IF-065-1.xml')
     
+    '''
+    fileDict['IntersectionConfiguration'] = os.path.join(folder, 'Intersection_configuration_IF-065.xml')
+    fileDict['CCTVConfiguration'] = os.path.join(folder, 'cctv_configuration_debug_1.xml')
+    '''
     loadLabelTool(fileDict)
 
 if __name__ == "__main__":
