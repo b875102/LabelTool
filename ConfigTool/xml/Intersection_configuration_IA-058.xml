@@ -1,0 +1,35 @@
+<configuration type='intersection'>
+	<header>
+		<name>50高鐵-高鐵橋下(保鐵十二路~保鐵八路)</name>
+		<version>1</version>
+		<date>2021-11-15 22:53:00</date>
+		<intersection_id>IA-058</intersection_id>
+	</header>
+	<road_information>
+		<road_type>Intersection</road_type>
+		<road_num>3</road_num>
+		<roads>
+			<road>
+				<link_id>C0056001</link_id>
+				<name>高鐵西路</name>
+				<lane_num>3</lane_num>
+				<section>North</section>
+				<direction>In</direction>
+			</road>
+			<road>
+				<link_id>C1056001</link_id>
+				<name></name>
+				<lane_num>1</lane_num>
+				<section>East</section>
+				<direction>Out</direction>
+			</road>
+			<road>
+				<link_id>C0058001</link_id>
+				<name>高鐵西路</name>
+				<lane_num>3</lane_num>
+				<section>South</section>
+				<direction>Out</direction>
+			</road>
+		</roads>
+	</road_information>
+</configuration>

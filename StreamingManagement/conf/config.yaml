@@ -1,0 +1,65 @@
+container_info:
+  docker_image: hdan99/ubuntu1604_nginx122:00.00
+  host_folder: /home/dan/nginx/demo
+  container_folder: /usr/local/nginx/html/video
+  streaming_port: 1935
+  nginx_port: 80
+  
+cctvs:
+- http://127.0.0.1/cam1
+- http://127.0.0.1/cam2
+
+demos:
+- /usr/local/nginx/html/video/NorthGate_Modify.api
+- /usr/local/nginx/html/video/NorthGate_Modify.mp4
+
+edge_device:
+- acc: dan
+  ip: 192.168.50.137
+  name: gpu1
+  pw: dan
+  status: stop
+  streaming: streaming1
+  task: inline
+- acc: dan
+  ip: 192.168.50.138
+  name: gpu2
+  pw: dan
+  status: stop
+  streaming: streaming1
+  task: offline
+  
+streaming_server:
+- name: streaming1
+  ip: 192.168.50.152
+  streaming_port: 19350
+  nginx_port: 8080
+  acc: dan
+  pw: dan
+  cctv: rtsp://admin:admin@192.168.50.244:8554/live
+  demo: /usr/local/nginx/html/video/NorthGate_Modify.mp4
+  status: start
+  task: live
+- name: streaming2
+  ip: 192.168.50.152
+  streaming_port: 19351
+  nginx_port: 8081
+  acc: dan
+  pw: dan
+  cctv: http://127.0.0.1/cam1
+  demo: /usr/local/nginx/html/video/NorthGate_Modify.mp4
+  status: start
+  task: demo
+- name: streaming3
+  ip: 192.168.50.152
+  streaming_port: 19352
+  nginx_port: 8082
+  acc: dan
+  pw: dan
+  cctv: http://127.0.0.1/cam1
+  demo: /usr/local/nginx/html/video/NorthGate_Modify.mp4
+  status: start
+  task: demo
+  
+  
+
